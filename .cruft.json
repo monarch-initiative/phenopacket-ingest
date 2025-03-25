@@ -1,0 +1,26 @@
+{
+  "template": "https://github.com/monarch-initiative/cookiecutter-monarch-ingest.git",
+  "commit": "811b322208beb2d68655f367e895a68017b97834",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "github_org_name": "monarch-initiative",
+      "project_name": "phenopacket-ingest",
+      "project_description": "This is the project description.",
+      "__repo_name": "phenopacket-ingest",
+      "__project_slug": "phenopacket_ingest",
+      "__project_url": "https://github.com/monarch-initiative/phenopacket-ingest",
+      "ingest_source": "data_source, ex. alliance, flybase, or hpoa.",
+      "ingest_type": "type_of_ingest, ex. gene, disease_to_phenotype, or disease_associations.",
+      "__ingest_name": "data_source, ex. alliance, flybase, or hpoa._type_of_ingest, ex. gene, disease_to_phenotype, or disease_associations.",
+      "min_python_version": "3.10",
+      "full_name": "Carlo Kroll",
+      "email": "krollc@unc.edu",
+      "__author": "Carlo Kroll <krollc@unc.edu>",
+      "license": "BSD-3",
+      "_template": "https://github.com/monarch-initiative/cookiecutter-monarch-ingest.git",
+      "_commit": "811b322208beb2d68655f367e895a68017b97834"
+    }
+  },
+  "directory": null
+}

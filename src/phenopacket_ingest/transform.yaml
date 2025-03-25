@@ -1,0 +1,44 @@
+# Config file for transforming phenopacket data
+# See additional/optional config parameters at https://koza.monarchinitiative.org/Ingests/source_config/
+
+name: "phenopacket_genes"
+metadata: "./src/phenopacket_ingest/metadata.yaml"
+format: "jsonl" # Format of the data files (using JSONL to ingest the extracted data)
+files:
+  - "./data/phenopacket_genes.jsonl"
+
+# Since we're using JSONL format, we don't need to specify columns/properties
+# JSONL files have self-describing structure
+
+node_properties:
+  - id
+  - name
+  - category
+  - symbol
+  - sex
+  - in_taxon
+  - in_taxon_label
+  - provided_by
+  - xref
+  - reference
+
+edge_properties:
+  - id
+  - subject
+  - predicate
+  - object
+  - knowledge_level
+  - agent_type
+  - primary_knowledge_source
+  - aggregator_knowledge_source
+  - onset_qualifier
+  - qualified_predicate
+  - publications
+
+# Use our transform.py script for processing
+transform_code: "./src/phenopacket_ingest/transform.py"
+transform_mode: "flat"
+
+# No need for min counts since we want all data
+# min_node_count: 10
+# min_edge_count: 5
