@@ -85,31 +85,6 @@ For example:
 poetry run phenopacket_ingest download --help
 ```
 
-## Implementation Details
-
-### Architecture
-
-The implementation follows a modular, multi-step approach:
-
-1. **Registry Module**: Downloads and manages phenopacket data from GitHub releases
-   - Handles authentication, versioning, and extraction
-   - Falls back to direct HTTP requests if phenopacket-store-toolkit is unavailable
-
-2. **Parser Module**: Extracts structured data from phenopacket protocol buffer objects
-   - Converts complex phenopacket structure to a flatter format
-   - Handles various versions and formats of phenopackets
-
-3. **Transform Module**: Converts extracted data to Biolink model entities
-   - Creates genes, diseases, variants and their associations
-   - Preserves provenance and evidence data
-
-### Error Handling
-
-The implementation has several fallback mechanisms:
-- Works even if the phenopackets library isn't available (with limited functionality)
-- Handles missing or malformed data gracefully
-- Provides detailed logging about processing issues
-
 ### Testing
 
 The test suite covers:
