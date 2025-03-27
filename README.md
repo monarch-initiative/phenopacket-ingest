@@ -1,7 +1,5 @@
 # phenopacket-ingest
 
-| [Documentation](https://monarch-initiative.github.io/phenopacket-ingest) |
-
 A Monarch Initiative ingest pipeline for phenopacket data from the [phenopacket-store](https://github.com/monarch-initiative/phenopacket-store). This pipeline downloads phenopacket data, extracts it, and transforms it into Biolink-compatible entities for inclusion in Monarch knowledge graphs.
 
 ## Overview
