@@ -54,6 +54,7 @@ class PhenopacketRegistryService:
         self.parser = PhenopacketParser(self.logger)
 
         self.registry = None
+        HAS_PPKTSTORE = True
         if HAS_PPKTSTORE:
             try:
                 self.registry = configure_phenopacket_registry(
