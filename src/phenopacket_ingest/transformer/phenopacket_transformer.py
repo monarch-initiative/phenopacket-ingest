@@ -9,7 +9,6 @@ import json
 import logging
 from typing import Dict, List, Any, Optional, Union, Tuple
 
-# Import models
 from phenopacket_ingest.models import (
     PhenopacketRecord,
     Subject,
@@ -21,7 +20,6 @@ from phenopacket_ingest.models import (
     CaseToVariantAssociation,
 )
 
-# Try to import Biolink models if available
 try:
     from biolink_model.datamodel.pydanticmodel_v2 import (
         Case,

@@ -90,29 +90,24 @@ class PhenopacketDownloader:
         self.logger.debug(f"Fetching tags from {tag_api_url}")
 
         try:
-            # Fetch tags from GitHub API
             with urlopen(tag_api_url, timeout=10.0, context=ctx) as fh:
                 tags = json.load(fh)
 
             if len(tags) == 0:
                 raise ValueError("No tags could be fetched from GitHub tag API")
 
-            # Determine release tag to use
             release_tag = self.config.release_tag
             if not release_tag:
                 release_tag = VersionResolver.find_latest_version(tags)
                 if not release_tag:
                     raise ValueError("Could not determine latest release tag")
 
-            # Construct download URL
             release_url = f"https://github.com/{self.config.repo_owner}/{self.config.repo_name}/releases/download/{release_tag}/all_phenopackets.zip"
             self.logger.info(f"Downloading phenopacket-store from {release_url}")
 
-            # Create download directory
             zip_file_path = data_dir / f"{release_tag}.zip"
             os.makedirs(os.path.dirname(zip_file_path), exist_ok=True)
 
-            # Download the file
             with urlopen(release_url, timeout=self.config.timeout, context=ctx) as response, open(zip_file_path,
                                                                                                   "wb") as fh:
                 fh.write(response.read())

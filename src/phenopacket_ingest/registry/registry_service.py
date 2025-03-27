@@ -12,7 +12,6 @@ from phenopacket_ingest.config import PhenopacketStoreConfig
 from phenopacket_ingest.registry.downloader import PhenopacketDownloader
 from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
 
-# Check if ppktstore is available
 HAS_PPKTSTORE = False
 try:
     from ppktstore.model import PhenopacketStore

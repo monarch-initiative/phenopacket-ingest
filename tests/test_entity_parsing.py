@@ -261,8 +261,6 @@ def phenopacket_record():
     """Create a PhenopacketRecord from the complete phenopacket."""
     parser = PhenopacketParser()
     record = parser.parse_from_json(json.dumps(COMPLETE_PHENOPACKET))
-    print(record)
-    # return record
     return PhenopacketRecord.model_validate(record)
 
 
@@ -270,20 +268,16 @@ def test_subject_parsing(phenopacket_record):
     """Test parsing subject information."""
     subject = phenopacket_record.subject
 
-    # Basic identity
     assert subject.id == "patient:1"
     assert len(subject.alternate_ids) == 2
     assert "alt:1" in subject.alternate_ids
 
-    # Sex
     assert subject.sex == "FEMALE"
 
-    # Age
     assert subject.time_at_last_encounter is not None
     assert subject.time_at_last_encounter.age is not None
     assert subject.time_at_last_encounter.age_value == "P42Y"
 
-    # Taxonomy
     assert subject.taxonomy is not None
     assert subject.taxonomy.id == "NCBITaxon:9606"
     assert subject.taxonomy.label == "Homo sapiens"
@@ -293,10 +287,8 @@ def test_phenotypic_features_parsing(phenopacket_record):
     """Test parsing phenotypic features."""
     features = phenopacket_record.phenotypic_features
 
-    # We should have three features
     assert len(features) == 3
 
-    # First feature - seizure
     seizure = [f for f in features if f.type.id == "HP:0001250"][0]
     assert seizure.type.label == "Seizure"
     assert not seizure.excluded
@@ -310,12 +302,10 @@ def test_phenotypic_features_parsing(phenopacket_record):
     assert len(seizure.evidence) == 1
     assert seizure.evidence[0].evidence_code.id == "ECO:0000033"
 
-    # Second feature - developmental delay
     dev_delay = [f for f in features if f.type.id == "HP:0001263"][0]
     assert dev_delay.type.label == "Developmental delay"
     assert not dev_delay.excluded
 
-    # Third feature - microcephaly (excluded)
     microcephaly = [f for f in features if f.type.id == "HP:0000252"][0]
     assert microcephaly.type.label == "Microcephaly"
     assert microcephaly.excluded
@@ -325,10 +315,8 @@ def test_disease_parsing(phenopacket_record):
     """Test parsing disease information."""
     diseases = phenopacket_record.diseases
 
-    # We should have one disease
     assert len(diseases) == 1
 
-    # KCNT1-related epilepsy
     disease = diseases[0]
     assert disease.term.id == "MONDO:0100038"
     assert disease.term.label == "KCNT1-related epilepsy"
@@ -348,7 +336,6 @@ def test_biosample_parsing(phenopacket_record):
 
     assert len(biosamples) == 1
 
-    # Blood sample
     biosample = biosamples[0]
     assert biosample.id == "biosample:1"
     assert biosample.individual_id == "patient:1"
@@ -368,10 +355,8 @@ def test_measurement_parsing(phenopacket_record):
     """Test parsing measurement information."""
     measurements = phenopacket_record.measurements
 
-    # We should have one measurement
     assert len(measurements) == 1
 
-    # Blood pressure
     measurement = measurements[0]
     assert measurement.description == "Blood pressure measurement"
     assert measurement.assay.id == "LOINC:8462-4"
@@ -385,16 +370,13 @@ def test_interpretation_parsing(phenopacket_record):
     """Test parsing interpretation information."""
     interpretations = phenopacket_record.interpretations
 
-    # We should have one interpretation
     assert len(interpretations) == 1
 
-    # Interpretation
     interpretation = interpretations[0]
     assert interpretation["id"] == "interpretation.1"
     assert interpretation["progress_status"] == "SOLVED"
     assert interpretation["diagnosis"]["disease"]["id"] == "MONDO:0100038"
 
-    # Genomic interpretations
     genomic_interpretations = interpretation["diagnosis"]["genomic_interpretations"]
     assert len(genomic_interpretations) == 1
 
@@ -404,18 +386,15 @@ def test_interpretation_parsing(phenopacket_record):
     assert gi["gene"]["value_id"] == "HGNC:18865"
     assert gi["gene"]["symbol"] == "KCNT1"
 
-    # Variant interpretation
     vi = gi["variant_interpretation"]
     assert vi["acmg_pathogenicity_classification"] == "PATHOGENIC"
     assert vi["therapeutic_actionability"] == "ACTIONABLE"
 
-    # Variation descriptor
     vd = vi["variation_descriptor"]
     assert vd["id"] == "variant:1"
     assert vd["gene_context"]["value_id"] == "HGNC:18865"
     assert vd["gene_context"]["symbol"] == "KCNT1"
 
-    # VCF record
     vcf = vd["vcf_record"]
     assert vcf["genome_assembly"] == "GRCh38"
     assert vcf["chrom"] == "9"
@@ -423,13 +402,11 @@ def test_interpretation_parsing(phenopacket_record):
     assert vcf["ref"] == "C"
     assert vcf["alt"] == "G"
 
-    # HGVS expressions
     expressions = vd["expressions"]
     assert len(expressions) == 2
     assert expressions[0]["value"] == "NM_020822.2:c.2800G>A"
     assert expressions[1]["value"] == "NP_065873.2:p.Ala934Thr"
 
-    # Allelic state
     assert vd["allelic_state"]["id"] == "GENO:0000135"
     assert vd["allelic_state"]["label"] == "heterozygous"
 
@@ -438,10 +415,8 @@ def test_medical_action_parsing(phenopacket_record):
     """Test parsing medical action information."""
     medical_actions = phenopacket_record.medical_actions
 
-    # We should have one medical action
     assert len(medical_actions) == 1
 
-    # Medical action
     action = medical_actions[0]
     assert action.treatment.agent.id ==  "CHEBI:6801"
     assert action.treatment.agent.label == "Ketogenic diet"
@@ -455,7 +430,6 @@ def test_file_parsing(phenopacket_record):
     """Test parsing file information."""
     files = phenopacket_record.files
 
-    # We should have one file
     assert len(files) == 1
 
     # File
@@ -468,13 +442,11 @@ def test_metadata_parsing(phenopacket_record):
     """Test parsing metadata information."""
     metadata = phenopacket_record.meta_data
 
-    # Basic metadata
     assert metadata.created == "2022-03-10T11:34:42Z"
     assert metadata.created_by == "Dr. Jane Smith"
     assert metadata.submitted_by == "Hospital X"
     assert metadata.phenopacket_schema_version == "2.0"
 
-    # External references
     assert len(metadata.external_references) == 2
     assert metadata.external_references[0].id == "PMID:33146646"
     assert metadata.external_references[1].id == "PMID:32489073"
@@ -484,7 +456,6 @@ def test_pmids_extraction(phenopacket_record):
     """Test extraction of PMIDs."""
     pmids = phenopacket_record.pmids
 
-    # We should have two PMIDs
     assert len(pmids) == 2
     assert "PMID:33146646" in pmids
     assert "PMID:32489073" in pmids
@@ -494,7 +465,6 @@ def test_genes_extraction(phenopacket_record):
     """Test extraction of genes."""
     genes = phenopacket_record.genes
 
-    # We should have one gene
     assert len(genes) == 1
     assert genes[0]["id"] == "HGNC:18865"
     assert genes[0]["symbol"] == "KCNT1"
@@ -505,7 +475,6 @@ def test_variants_extraction(phenopacket_record):
     """Test extraction of variants."""
     variants = phenopacket_record.variants
 
-    # We should have one variant
     assert len(variants) == 1
     assert variants[0].id == "variant:1"
     assert variants[0].gene_symbol == "KCNT1"
@@ -524,19 +493,17 @@ def test_observed_phenotypes_extraction(phenopacket_record):
     """Test extraction of observed phenotypes."""
     observed = phenopacket_record.observed_phenotypes
 
-    # We should have two observed phenotypes
     assert len(observed) == 2
-    assert observed[0].type.id == "HP:0001250"  # Seizure
-    assert observed[1].type.id == "HP:0001263"  # Developmental delay
+    assert observed[0].type.id == "HP:0001250"
+    assert observed[1].type.id == "HP:0001263"
 
 
 def test_excluded_phenotypes_extraction(phenopacket_record):
     """Test extraction of excluded phenotypes."""
     excluded = phenopacket_record.excluded_phenotypes
 
-    # We should have one excluded phenotype
     assert len(excluded) == 1
-    assert excluded[0].type.id == "HP:0000252"  # Microcephaly
+    assert excluded[0].type.id == "HP:0000252"
     assert excluded[0].excluded
 
 
@@ -568,12 +535,10 @@ def test_biolink_entity_generation(phenopacket_record):
 
 
 if __name__ == "__main__":
-    # Create a phenopacket record
     parser = PhenopacketParser()
     record = parser.parse_from_json(json.dumps(COMPLETE_PHENOPACKET))
     phenopacket_record = PhenopacketRecord.model_validate(record)
 
-    # Run tests
     test_subject_parsing(phenopacket_record)
     test_phenotypic_features_parsing(phenopacket_record)
     test_disease_parsing(phenopacket_record)

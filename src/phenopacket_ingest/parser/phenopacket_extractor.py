@@ -43,15 +43,12 @@ class PhenopacketExtractor:
         Returns:
             Path to the generated JSONL file
         """
-        # Check if we need to extract
         if output_path.exists() and not force:
             self.logger.info(f"JSONL file already exists at {output_path}")
             return output_path
 
-        # Ensure the output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Check for phenopackets library
         try:
             from phenopackets import Phenopacket as PBPhenopacket
             from google.protobuf.json_format import Parse
@@ -72,16 +69,13 @@ class PhenopacketExtractor:
                 if i % 100 == 0:
                     self.logger.info(f"Processing file {i + 1}/{total_files}")
 
-                # Determine cohort from file path if possible
                 parts = pp_file.split('/')
                 file_cohort_name = parts[0] if len(parts) > 1 else cohort_name
 
                 try:
-                    # Read and parse the phenopacket
                     pp_content = zf.read(pp_file).decode('utf-8')
                     phenopacket = Parse(pp_content, PBPhenopacket())
 
-                    # Process the phenopacket
                     self._process_phenopacket(phenopacket, f, file_cohort_name)
 
                 except Exception as e:
@@ -100,11 +94,9 @@ class PhenopacketExtractor:
             cohort_name: Cohort name for this phenopacket
         """
         try:
-            # Convert phenopacket to JSONL dict
             record_dict = self.parser.phenopacket_to_jsonl_dict(phenopacket, cohort_name)
 
             if record_dict:
-                # Write to JSONL file
                 output_file.write(json.dumps(record_dict) + "\n")
             else:
                 self.logger.warning(f"No data extracted from phenopacket {getattr(phenopacket, 'id', 'unknown')}")
@@ -128,10 +120,8 @@ class PhenopacketExtractor:
                     self.logger.info(f"Processed {i} records")
 
                 try:
-                    # Parse line
                     record = self.parser.parse_from_jsonl(line.strip())
 
-                    # Process record if valid
                     if record and "id" in record:
                         output_func(record)
                     else:
