@@ -1,12 +1,6 @@
-### This file is a YAML configuration that specifies
-### the data to be downloaded and ingested for this project.
-### The configuration is used by `kghub-downloader`.
-### For more information, see https://github.com/monarch-initiative/kghub-downloader
----
-# The actual phenopacket data will be downloaded from:
-# https://github.com/monarch-initiative/phenopacket-store/releases/download/{release}/all_phenopackets.zip
-# But this is handled by our custom registry code, not kghub-downloader
+# Phenopacket-ingest download configuration
+# This file contains configuration for auxiliary data downloads
 
-# These downloads are just for setting up the required directories
-- url: https://raw.githubusercontent.com/monarch-initiative/phenopacket-store/main/README.md
-  local_name: data/README.md
+title: "Phenopacket Store"
+download_url: https://github.com/phenopackets/phenopacket-store/releases/download/v0.1.18/all_phenopackets.zip
+local_name: data/phenopackets/v0.1.18.zip
