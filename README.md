@@ -26,34 +26,6 @@ This ingest relies on phenopacket data from the [phenopacket-store](https://gith
   - Interpretations (causality assessments)
   - Metadata (references, provenance)
 
-### Nodes and Edges
-The ingest produces the following Biolink entities:
-
-**Nodes:**
-- **Gene**: Genes associated with phenotypes and diseases
-- **Disease**: Disease entities from phenopackets (MONDO terms)
-- **SequenceVariant**: Genomic variants found in phenopackets
-
-**Edges:**
-- **GeneToDiseaseAssociation**: Connections between genes and diseases
-- **GeneToPhenotypicFeatureAssociation**: Connections between genes and phenotypes
-- **DiseaseToPhenotypicFeatureAssociation**: Connections between diseases and phenotypes
-- **VariantToGeneAssociation**: Connections between variants and their respective genes
-- **VariantToDiseaseAssociation**: Connections between variants and diseases
-
-#### Future Entities
-The codebase includes commented-out implementation for future Biolink model entities:
-
-**Future Nodes:**
-- **Case**: Individual patient/subject information from phenopackets
-- **BiologicalSex**: Biological sex of the case/subject
-
-**Future Edges:**
-- **CaseToDiseaseAssociation**: Connects cases to their diagnosed diseases
-- **CaseToVariantAssociation**: Connects cases to their genetic variants
-- **CaseToGeneAssociation**: Connects cases to genes with variants
-
-These future entities will be enabled once they are officially added to the Biolink model.
 
 ## Requirements
 
