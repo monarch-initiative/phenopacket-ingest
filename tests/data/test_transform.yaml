@@ -2,7 +2,7 @@
 
 # This configuration points to a test JSONL input and instructs Koza how to process it.
 
-name: "phenopacket_genes"
+name: "phenopacket_ingest"
 metadata: "../src/phenopacket_ingest/metadata.yaml"
 format: "jsonl"
 
