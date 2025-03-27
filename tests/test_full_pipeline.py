@@ -19,7 +19,7 @@ def test_pipeline():
     output_dir = Path("manual_output")
     output_dir.mkdir(exist_ok=True)
     
-    test_data_dir = Path("/Users/ck/Monarch/phenopacket-ingest/data/test_phenopackets")
+    test_data_dir = Path("/tests/data/test_phenopackets")
     test_zip_path = Path("/Users/ck/Monarch/phenopacket-ingest/data/test_phenopackets.zip")
     
     with zipfile.ZipFile(test_zip_path, 'w') as zip_file:
@@ -92,8 +92,7 @@ def test_pipeline():
     
     if test_zip_path.exists():
         os.remove(test_zip_path)
-        logger.info(f"Removed test zip file {test_zip_path}")
-    
+
     return nodes_file, edges_file
 
 

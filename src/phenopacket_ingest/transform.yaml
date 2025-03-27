@@ -1,7 +1,7 @@
 # Config file for transforming phenopacket data
 # See additional/optional config parameters at https://koza.monarchinitiative.org/Ingests/source_config/
 
-name: "phenopacket_genes"
+name: "phenopacket_ingest"
 metadata: "./src/phenopacket_ingest/metadata.yaml"
 format: "jsonl" # Format of the data files (using JSONL to ingest the extracted data)
 files:
@@ -36,7 +36,7 @@ edge_properties:
   - publications
 
 # Use our transform.py script for processing
-transform_code: "./src/phenopacket_ingest/transform.py"
+transform_code: "./src/phenopacket_ingest/ingest.py"
 transform_mode: "flat"
 
 # No need for min counts since we want all data

@@ -1,0 +1,41 @@
+# Example `phenopacket_ingest.yaml` for Koza test setup (validated structure)
+
+# This configuration points to a test JSONL input and instructs Koza how to process it.
+
+name: "phenopacket_genes"
+metadata: "../src/phenopacket_ingest/metadata.yaml"
+format: "jsonl"
+
+files:
+  - "../tests/data/phenopacket_genes.jsonl"
+
+node_properties:
+  - id
+  - name
+  - category
+  - symbol
+  - sex
+  - in_taxon
+  - in_taxon_label
+  - provided_by
+  - xref
+  - reference
+
+edge_properties:
+  - id
+  - subject
+  - predicate
+  - object
+  - knowledge_level
+  - agent_type
+  - primary_knowledge_source
+  - aggregator_knowledge_source
+  - onset_qualifier
+  - qualified_predicate
+  - publications
+
+transform_code: "./src/phenopacket_ingest/ingest.py"
+transform_mode: "flat"
+
+# ⚠️ Double-check that the `data/phenopacket_genes.jsonl` path contains actual test records.
+# Without valid rows in that file, Koza will immediately hit StopIteration.
