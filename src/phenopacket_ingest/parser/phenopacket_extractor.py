@@ -1,12 +1,12 @@
 """
 Phenopacket extraction module for processing phenopacket files.
 """
+
 import json
 import logging
-import os
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union, Tuple, Iterator
+from typing import Optional
 
 from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
 
@@ -20,16 +20,13 @@ class PhenopacketExtractor:
 
         Args:
             logger: Logger for tracking operations
+
         """
         self.logger = logger or logging.getLogger(__name__)
         self.parser = PhenopacketParser(logger)
 
     def extract_to_jsonl(
-            self,
-            zip_path: Path,
-            output_path: Path,
-            cohort_name: str = "unknown",
-            force: bool = False
+        self, zip_path: Path, output_path: Path, cohort_name: str = "unknown", force: bool = False
     ) -> Path:
         """
         Extract phenopacket data to JSONL format.
@@ -42,6 +39,7 @@ class PhenopacketExtractor:
 
         Returns:
             Path to the generated JSONL file
+
         """
         if output_path.exists() and not force:
             self.logger.info(f"JSONL file already exists at {output_path}")
@@ -50,8 +48,8 @@ class PhenopacketExtractor:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            from phenopackets import Phenopacket as PBPhenopacket
             from google.protobuf.json_format import Parse
+            from phenopackets import Phenopacket as PBPhenopacket
         except ImportError:
             self.logger.error("phenopackets library not available, cannot extract data")
             raise ImportError("phenopackets library is required for extraction")
@@ -59,8 +57,9 @@ class PhenopacketExtractor:
         self.logger.info(f"Extracting phenopacket data from {zip_path} to {output_path}")
 
         with zipfile.ZipFile(zip_path) as zf, open(output_path, "w") as f:
-            phenopacket_files = [name for name in zf.namelist()
-                                 if name.endswith('.json') and not name.startswith('__MACOSX')]
+            phenopacket_files = [
+                name for name in zf.namelist() if name.endswith('.json') and not name.startswith('__MACOSX')
+            ]
 
             total_files = len(phenopacket_files)
             self.logger.info(f"Found {total_files} phenopacket files to process")
@@ -92,6 +91,7 @@ class PhenopacketExtractor:
             phenopacket: A phenopacket protocol buffer object
             output_file: File to write JSONL output to
             cohort_name: Cohort name for this phenopacket
+
         """
         try:
             record_dict = self.parser.phenopacket_to_jsonl_dict(phenopacket, cohort_name)
@@ -111,6 +111,7 @@ class PhenopacketExtractor:
         Args:
             jsonl_path: Path to the JSONL file
             output_func: Function to process each record
+
         """
         self.logger.info(f"Processing JSONL file: {jsonl_path}")
 

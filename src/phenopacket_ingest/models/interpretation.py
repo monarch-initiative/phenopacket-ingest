@@ -6,7 +6,7 @@ including disease diagnoses and genomic interpretations.
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -15,6 +15,7 @@ from phenopacket_ingest.models.ontology import OntologyClass
 
 class InterpretationStatus(str, Enum):
     """Status of a genomic interpretation."""
+
     UNKNOWN_STATUS = "UNKNOWN_STATUS"
     REJECTED = "REJECTED"
     CANDIDATE = "CANDIDATE"
@@ -39,6 +40,7 @@ class InterpretationStatus(str, Enum):
 
 class ProgressStatus(str, Enum):
     """Status of a clinical interpretation."""
+
     UNKNOWN_PROGRESS = "UNKNOWN_PROGRESS"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
@@ -48,6 +50,7 @@ class ProgressStatus(str, Enum):
 
 class VariationDescriptor(BaseModel):
     """A description of a genomic variation."""
+
     id: Optional[str] = None
     gene_context: Optional[Dict[str, str]] = None
     vcf_record: Optional[Dict[str, Any]] = None
@@ -58,6 +61,7 @@ class VariationDescriptor(BaseModel):
 
 class VariantInterpretation(BaseModel):
     """Interpretation of a variant."""
+
     acmg_pathogenicity_classification: Optional[str] = None
     therapeutic_actionability: Optional[str] = None
     variation_descriptor: Optional[VariationDescriptor] = None
@@ -65,6 +69,7 @@ class VariantInterpretation(BaseModel):
 
 class GenomicInterpretation(BaseModel):
     """Interpretation of genomic findings."""
+
     subject_or_biosample_id: Optional[str] = None
     interpretation_status: Optional[InterpretationStatus] = None
     gene: Optional[Dict[str, str]] = None
@@ -76,12 +81,14 @@ class GenomicInterpretation(BaseModel):
 
 class Diagnosis(BaseModel):
     """A diagnosis."""
+
     disease: Optional[OntologyClass] = None
     genomic_interpretations: List[GenomicInterpretation] = Field(default_factory=list)
 
 
 class Interpretation(BaseModel):
     """A clinical interpretation."""
+
     id: str
     progress_status: Optional[ProgressStatus] = None
     diagnosis: Optional[Diagnosis] = None

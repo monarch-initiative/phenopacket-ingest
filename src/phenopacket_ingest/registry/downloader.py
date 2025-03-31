@@ -11,7 +11,7 @@ import os
 import re
 import ssl
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 from urllib.request import urlopen
 
 import certifi
@@ -22,9 +22,7 @@ from phenopacket_ingest.config import PhenopacketStoreConfig
 class VersionResolver:
     """Resolver for semantic versioning."""
 
-    SEMVER_VERSION_PATTERN = re.compile(
-        r"v?(?P<major>\d+)(\.(?P<minor>\d+))?(\.(?P<patch>\d+))?"
-    )
+    SEMVER_VERSION_PATTERN = re.compile(r"v?(?P<major>\d+)(\.(?P<minor>\d+))?(\.(?P<patch>\d+))?")
 
     @classmethod
     def find_latest_version(cls, tags: List[Dict[str, Any]]) -> Optional[str]:
@@ -36,6 +34,7 @@ class VersionResolver:
 
         Returns:
             Latest version tag or None if no valid tags found
+
         """
         if not tags:
             return None
@@ -69,6 +68,7 @@ class PhenopacketDownloader:
         Args:
             config: Configuration settings
             logger: Logger for tracking operations
+
         """
         self.config = config
         self.logger = logger or logging.getLogger(__name__)
@@ -82,6 +82,7 @@ class PhenopacketDownloader:
 
         Returns:
             Path to the downloaded ZIP file
+
         """
         self.logger.info("Downloading phenopacket-store release from GitHub")
 
@@ -108,8 +109,9 @@ class PhenopacketDownloader:
             zip_file_path = data_dir / f"{release_tag}.zip"
             os.makedirs(os.path.dirname(zip_file_path), exist_ok=True)
 
-            with urlopen(release_url, timeout=self.config.timeout, context=ctx) as response, open(zip_file_path,
-                                                                                                  "wb") as fh:
+            with urlopen(release_url, timeout=self.config.timeout, context=ctx) as response, open(
+                zip_file_path, "wb"
+            ) as fh:
                 fh.write(response.read())
 
             self.logger.info(f"Downloaded phenopacket-store release {release_tag} to {zip_file_path}")

@@ -1,16 +1,17 @@
 """
 Registry module for downloading and managing phenopacket data.
 """
+
 import json
 import logging
 import os
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Optional
 
 from phenopacket_ingest.config import PhenopacketStoreConfig
-from phenopacket_ingest.registry.downloader import PhenopacketDownloader
 from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
+from phenopacket_ingest.registry.downloader import PhenopacketDownloader
 
 HAS_PPKTSTORE = False
 try:
@@ -39,6 +40,7 @@ class PhenopacketRegistryService:
         Args:
             data_dir: Directory to store downloaded phenopackets. If None, uses default.
             logger: Logger for tracking operations
+
         """
         self.logger = logger or logging.getLogger(__name__)
         self.config = PhenopacketStoreConfig()
@@ -56,9 +58,7 @@ class PhenopacketRegistryService:
         HAS_PPKTSTORE = True
         if HAS_PPKTSTORE:
             try:
-                self.registry = configure_phenopacket_registry(
-                    store_dir=self.data_dir
-                )
+                self.registry = configure_phenopacket_registry(store_dir=self.data_dir)
                 self.logger.info("Initialized phenopacket registry")
             except Exception as e:
                 self.logger.error(f"Error initializing registry: {e}")
@@ -72,6 +72,7 @@ class PhenopacketRegistryService:
 
         Returns:
             Path to the downloaded ZIP file
+
         """
         global HAS_PPKTSTORE
         if HAS_PPKTSTORE and self.registry:
@@ -100,6 +101,7 @@ class PhenopacketRegistryService:
 
         Returns:
             Path to the generated JSONL file
+
         """
         if zip_path is None:
             zip_path = self.download_latest_release()
@@ -130,6 +132,7 @@ class PhenopacketRegistryService:
         Args:
             zip_path: Path to phenopacket-store ZIP file
             jsonl_path: Path to output JSONL file
+
         """
         self.logger.info(f"Extracting phenopacket data from {zip_path} to {jsonl_path}")
 
@@ -157,20 +160,22 @@ class PhenopacketRegistryService:
         Args:
             zip_path: Path to phenopacket-store ZIP file
             jsonl_path: Path to output JSONL file
+
         """
         self.logger.info(f"Extracting phenopacket data directly from {zip_path} to {jsonl_path}")
 
         # Check if phenopackets library is available
         try:
-            from phenopackets import Phenopacket as PBPhenopacket
             from google.protobuf.json_format import Parse
+            from phenopackets import Phenopacket as PBPhenopacket
         except ImportError:
             self.logger.error("phenopackets library not available, cannot extract data")
             raise ImportError("phenopackets library is required for extraction")
 
         with zipfile.ZipFile(zip_path) as zf, open(jsonl_path, "w") as f:
-            phenopacket_files = [name for name in zf.namelist()
-                                 if name.endswith('.json') and not name.startswith('__MACOSX')]
+            phenopacket_files = [
+                name for name in zf.namelist() if name.endswith('.json') and not name.startswith('__MACOSX')
+            ]
 
             self.logger.info(f"Found {len(phenopacket_files)} phenopacket files")
 

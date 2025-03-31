@@ -7,15 +7,17 @@ closely following the phenopacket schema specification.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, validator, model_validator, field_validator
+from pydantic import BaseModel, Field, model_validator, validator
 
-from phenopacket_ingest.models.ontology import OntologyClass
 from phenopacket_ingest.models.metadata import MetaData
+from phenopacket_ingest.models.ontology import OntologyClass
+
 
 class Age(BaseModel):
     iso8601duration: str
+
 
 class Encounter(BaseModel):
     age: Age
@@ -24,8 +26,10 @@ class Encounter(BaseModel):
     def age_value(self) -> str:
         return self.age.iso8601duration
 
+
 class TimeElement(BaseModel):
     """A time element that can represent age or timestamps."""
+
     age: Optional[Age] = None  # ISO8601 duration
     timestamp: Optional[datetime] = None
     interval: Optional[Dict[str, Any]] = None
@@ -33,6 +37,7 @@ class TimeElement(BaseModel):
 
 class Sex(str, Enum):
     """Sex of an individual."""
+
     UNKNOWN = "UNKNOWN"
     FEMALE = "FEMALE"
     MALE = "MALE"
@@ -41,6 +46,7 @@ class Sex(str, Enum):
 
 class KaryotypicSex(str, Enum):
     """Karyotypic sex of an individual."""
+
     UNKNOWN_KARYOTYPE = "UNKNOWN_KARYOTYPE"
     XX = "XX"
     XY = "XY"
@@ -56,6 +62,7 @@ class KaryotypicSex(str, Enum):
 
 class VitalStatus(BaseModel):
     """Vital status of an individual."""
+
     status: str
     time_of_death: Optional[TimeElement] = None
     cause_of_death: Optional[OntologyClass] = None
@@ -64,8 +71,10 @@ class VitalStatus(BaseModel):
 
 class Evidence(BaseModel):
     """Evidence for a phenotypic feature."""
+
     evidence_code: Optional[OntologyClass] = None
     reference: Optional[Dict[str, str]] = None
+
 
 class PhenotypeTerm(BaseModel):
     id: str = Field(..., description="The ontology term ID of this feature")
@@ -74,6 +83,7 @@ class PhenotypeTerm(BaseModel):
 
 class PhenotypicFeature(BaseModel):
     """A phenotypic feature (typically an HPO term)."""
+
     type: PhenotypeTerm
     excluded: bool = False
     description: Optional[str] = None
@@ -96,8 +106,10 @@ class DiseaseTerm(BaseModel):
     id: str = Field(..., description="The ontology term ID of this disease")
     label: Optional[str]
 
+
 class Disease(BaseModel):
     """A disease diagnosis."""
+
     term: DiseaseTerm
     excluded: bool = False
     onset: Optional[TimeElement] = None
@@ -118,6 +130,7 @@ class Disease(BaseModel):
 
 class VcfRecord(BaseModel):
     """A variant in VCF format."""
+
     genome_assembly: str
     chrom: str
     pos: str
@@ -128,12 +141,15 @@ class VcfRecord(BaseModel):
     filter: Optional[str] = None
     info: Optional[str] = None
 
+
 class Zygosity(BaseModel):
     id: str
     label: str = None
 
+
 class Variant(BaseModel):
     """A genomic variant."""
+
     id: Optional[str] = None
     gene_symbol: Optional[str] = None
     gene_id: Optional[str] = None
@@ -171,33 +187,41 @@ class Variant(BaseModel):
 
 class Procedure(BaseModel):
     """A clinical procedure."""
+
     code: OntologyClass
     body_site: Optional[OntologyClass] = None
     performed: Optional[Union[str, Dict[str, Any]]] = None
+
 
 class GenomeAssembly(BaseModel):
     genome_assembly: str
     """A genomic assembly."""
 
+
 class File(BaseModel):
     """A reference to an external file."""
+
     uri: str
     file_format: Optional[str] = None
     file_attributes: GenomeAssembly = None
     file_type: Optional[str] = None
+
 
 class ReferenceRange(BaseModel):
     high: Optional[float] = None
     low: Optional[float] = None
     unit: Optional[OntologyClass] = None
 
+
 class Quantity(BaseModel):
     referenceRange: Optional[ReferenceRange] = None
     unit: Optional[OntologyClass] = None
     value: Optional[int] = None
 
+
 class Value(BaseModel):
     """A measurement value."""
+
     quantity: Optional[Quantity] = None
     ontology_class: Optional[OntologyClass] = None
     time_value: Optional[TimeElement] = None
@@ -207,11 +231,13 @@ class Value(BaseModel):
 
 class ComplexValue(BaseModel):
     """A complex measurement value."""
+
     typed_quantities: Dict[str, Any] = Field(default_factory=dict)
 
 
 class Measurement(BaseModel):
     """A clinical measurement."""
+
     description: Optional[str] = None
     assay: OntologyClass
     value: Optional[Value] = None
@@ -222,6 +248,7 @@ class Measurement(BaseModel):
 
 class Treatment(BaseModel):
     """A treatment."""
+
     agent: OntologyClass
     route_of_administration: Optional[OntologyClass] = None
     dose_intervals: List[Dict[str, Any]] = Field(default_factory=list)
@@ -230,6 +257,7 @@ class Treatment(BaseModel):
 
 class MedicalAction(BaseModel):
     """A medical action such as treatment or procedure."""
+
     procedure: Optional[Procedure] = None
     treatment: Optional[Treatment] = None
     radiation_therapy: Optional[Dict[str, Any]] = None
@@ -243,6 +271,7 @@ class MedicalAction(BaseModel):
 
 class Subject(BaseModel):
     """An individual subject of a phenopacket."""
+
     id: str
     alternate_ids: List[str] = Field(default_factory=list)
     date_of_birth: Optional[datetime] = None
@@ -269,6 +298,7 @@ class Subject(BaseModel):
         """Shortcut to get the subject's age as ISO 8601 duration."""
         return self.time_at_last_encounter.age_value
 
+
 class Taxonomy(BaseModel):
     id: str
     label: str
@@ -276,6 +306,7 @@ class Taxonomy(BaseModel):
 
 class Biosample(BaseModel):
     """A biological sample."""
+
     id: str
     individual_id: Optional[str] = None
     derived_from_id: Optional[str] = None
@@ -299,7 +330,6 @@ class Biosample(BaseModel):
     sample_storage: Optional[OntologyClass] = None
 
 
-
 class PhenopacketRecord(BaseModel):
     """
     A phenopacket record representing a complete phenopacket.
@@ -307,6 +337,7 @@ class PhenopacketRecord(BaseModel):
     This is the top-level model that corresponds to a complete phenopacket
     and can be serialized to/from JSONL for further processing.
     """
+
     id: str
     subject: Subject
     phenotypic_features: List[PhenotypicFeature] = Field(default_factory=list)
@@ -348,46 +379,33 @@ class PhenopacketRecord(BaseModel):
     @model_validator(mode='after')
     def process_nested_objects(self):
         """Process nested objects to ensure proper structure."""
-        # If observed/excluded phenotypes not provided, extract from phenotypic_features
-        if not self.observed_phenotypes and not self.excluded_phenotypes and self.phenotypic_features:
-            for feature in self.phenotypic_features:
-                if feature.excluded:
-                    self.excluded_phenotypes.append(feature)
-                else:
-                    self.observed_phenotypes.append(feature)
 
         # If genes/variants not provided, extract from interpretations
         if not self.genes and not self.variants and self.interpretations:
-            # Process interpretations into genes and variants
             for interp in self.interpretations:
                 if "diagnosis" in interp and "genomic_interpretations" in interp["diagnosis"]:
                     for gi in interp["diagnosis"]["genomic_interpretations"]:
-                        # Extract gene
                         if "gene" in gi:
                             gene_info = {
                                 "id": gi["gene"].get("value_id", ""),
                                 "symbol": gi["gene"].get("symbol", ""),
-                                "interpretation_status": gi.get("interpretation_status", "")
+                                "interpretation_status": gi.get("interpretation_status", ""),
                             }
                             self.genes.append(gene_info)
 
-                        # Extract variant
                         if "variant_interpretation" in gi and "variation_descriptor" in gi["variant_interpretation"]:
                             vd = gi["variant_interpretation"]["variation_descriptor"]
 
-                            # Create variant
                             variant = Variant(
                                 id=vd.get("id", ""),
                                 interpretation_status=gi.get("interpretation_status", ""),
-                                hgvs_expressions=[]
+                                hgvs_expressions=[],
                             )
 
-                            # Get gene context
                             if "gene_context" in vd:
                                 variant.gene_symbol = vd["gene_context"].get("symbol", "")
                                 variant.gene_id = vd["gene_context"].get("value_id", "")
 
-                            # Get VCF information
                             if "vcf_record" in vd:
                                 vcf = vd["vcf_record"]
                                 variant.vcf_record = VcfRecord(
@@ -395,17 +413,15 @@ class PhenopacketRecord(BaseModel):
                                     chrom=vcf.get("chrom", ""),
                                     pos=vcf.get("pos", ""),
                                     ref=vcf.get("ref", ""),
-                                    alt=vcf.get("alt", "")
+                                    alt=vcf.get("alt", ""),
                                 )
 
-                            # Get zygosity
                             if "allelic_state" in vd:
                                 if isinstance(vd["allelic_state"], dict) and "label" in vd["allelic_state"]:
                                     variant.zygosity = vd["allelic_state"]["label"]
                                 else:
                                     variant.zygosity = vd["allelic_state"]
 
-                            # Extract HGVS expressions
                             if "expressions" in vd:
                                 for expr in vd["expressions"]:
                                     if "value" in expr:
@@ -413,7 +429,6 @@ class PhenopacketRecord(BaseModel):
 
                             self.variants.append(variant)
 
-        # Extract PMIDs if not provided
         if not self.pmids and self.meta_data and hasattr(self.meta_data, "external_references"):
             for ref in self.meta_data.external_references:
                 if hasattr(ref, "id") and ref.id.startswith("PMID:"):
@@ -424,7 +439,6 @@ class PhenopacketRecord(BaseModel):
     @classmethod
     def from_dict(cls, data: dict) -> "PhenopacketRecord":
         """Create a PhenopacketRecord from a dictionary."""
-        # Handle special fields that might need conversion
         if "subject" in data and isinstance(data["subject"], dict):
             data["subject"] = Subject.model_validate(data["subject"])
 

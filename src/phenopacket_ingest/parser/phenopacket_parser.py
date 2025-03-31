@@ -7,12 +7,12 @@ into JSON-serializable dictionaries and Pydantic models.
 
 import json
 import logging
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, Optional
 
 PHENOPACKETS_AVAILABLE = False
 try:
-    from phenopackets import Phenopacket as PBPhenopacket
     from google.protobuf.json_format import MessageToDict, Parse
+    from phenopackets import Phenopacket as PBPhenopacket
 
     PHENOPACKETS_AVAILABLE = True
 except ImportError:
@@ -42,6 +42,7 @@ class PhenopacketParser:
 
         Returns:
             A dictionary representation of the phenopacket
+
         """
         if not PHENOPACKETS_AVAILABLE:
             self.logger.error("Cannot parse phenopacket: phenopackets library not available")
@@ -49,9 +50,7 @@ class PhenopacketParser:
 
         try:
             phenopacket_dict = MessageToDict(
-                phenopacket,
-                preserving_proto_field_name=True,
-                including_default_value_fields=False
+                phenopacket, preserving_proto_field_name=True, including_default_value_fields=False
             )
 
             self._process_special_fields(phenopacket_dict)
@@ -72,12 +71,15 @@ class PhenopacketParser:
 
         Returns:
             A dictionary with flattened phenopacket data or None if conversion fails
+
         """
         try:
             phenopacket_dict = self.phenopacket_to_dict(phenopacket)
             if not phenopacket_dict:
                 return None
 
+            # Convert all camelCase keys to snake_case for consistency
+            phenopacket_dict = self.convert_dict_keys_to_snake_case(phenopacket_dict)
             phenopacket_dict["cohort"] = cohort_name
 
             result = {
@@ -134,7 +136,7 @@ class PhenopacketParser:
                                 gene_info = {
                                     "id": gi["gene"].get("value_id", ""),
                                     "symbol": gi["gene"].get("symbol", ""),
-                                    "interpretation_status": gi.get("interpretation_status", "")
+                                    "interpretation_status": gi.get("interpretation_status", ""),
                                 }
                                 genes.append(gene_info)
 
@@ -142,13 +144,15 @@ class PhenopacketParser:
                                     result["gene_symbol"] = gene_info["symbol"]
                                     result["gene_id"] = gene_info["id"]
 
-                            if "variant_interpretation" in gi and "variation_descriptor" in gi[
-                                "variant_interpretation"]:
+                            if (
+                                "variant_interpretation" in gi
+                                and "variation_descriptor" in gi["variant_interpretation"]
+                            ):
                                 vd = gi["variant_interpretation"]["variation_descriptor"]
                                 variant = {
                                     "id": vd.get("id", ""),
                                     "interpretation_status": gi.get("interpretation_status", ""),
-                                    "hgvs_expressions": []
+                                    "hgvs_expressions": [],
                                 }
 
                                 if "gene_context" in vd:
@@ -214,6 +218,7 @@ class PhenopacketParser:
 
         Args:
             pb_dict: Dictionary converted from protobuf
+
         """
         if "subject" in pb_dict and "sex" in pb_dict["subject"]:
             sex_value = pb_dict["subject"]["sex"]
@@ -226,7 +231,7 @@ class PhenopacketParser:
                     "UNKNOWN_SEX": "UNKNOWN",
                     "FEMALE": "FEMALE",
                     "MALE": "MALE",
-                    "OTHER_SEX": "OTHER"
+                    "OTHER_SEX": "OTHER",
                 }
                 pb_dict["subject"]["sex"] = sex_mapping.get(str(sex_value), str(sex_value))
 
@@ -241,40 +246,98 @@ class PhenopacketParser:
                                 "1": "REJECTED",
                                 "2": "CANDIDATE",
                                 "3": "CONTRIBUTORY",
-                                "4": "CAUSATIVE"
+                                "4": "CAUSATIVE",
                             }
                             gi["interpretation_status"] = status_mapping.get(str(status), str(status))
 
+    def camel_to_snake(self, name: str) -> str:
+        """Convert camelCase string to snake_case."""
+        import re
+
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+    def convert_dict_keys_to_snake_case(self, obj: Any) -> Any:
+        """Recursively convert all dictionary keys from camelCase to snake_case."""
+        if isinstance(obj, dict):
+            new_dict = {}
+            for key, value in obj.items():
+                new_key = self.camel_to_snake(key)
+                new_dict[new_key] = self.convert_dict_keys_to_snake_case(value)
+            return new_dict
+        elif isinstance(obj, list):
+            return [self.convert_dict_keys_to_snake_case(item) for item in obj]
+        else:
+            return obj
+
+    def validate_against_model(self, data: Dict[str, Any]) -> None:
+        """Validate data against the PhenopacketRecord model and print warnings for mismatches."""
+        from phenopacket_ingest.models import PhenopacketRecord
+
+        model_fields = set(PhenopacketRecord.model_fields.keys())
+        data_fields = set(data.keys())
+
+        # Check for missing fields
+        missing_fields = model_fields - data_fields
+        if missing_fields:
+            missing_required = []
+            missing_optional = []
+
+            for field in missing_fields:
+                if field in PhenopacketRecord.model_fields:
+                    field_info = PhenopacketRecord.model_fields[field]
+                    if field_info.is_required():
+                        missing_required.append(field)
+                    else:
+                        missing_optional.append(field)
+
+            if missing_required:
+                print(f"WARNING: Missing required fields: {', '.join(missing_required)}")
+
+            if missing_optional and len(missing_optional) < 10:  # Only show if there are just a few
+                print(f"INFO: Missing optional fields: {', '.join(missing_optional)}")
+
+        # Check for extra fields
+        extra_fields = data_fields - model_fields
+        if extra_fields:
+            print(f"WARNING: Found extra fields not in model: {', '.join(extra_fields)}")
+
     def parse_from_json(self, json_str: str) -> Dict[str, Any]:
         """
-        Parse a phenopacket from a JSON string.
+        Parse a phenopacket from a JSON string, converting camelCase to snake_case.
 
         Args:
             json_str: JSON string representation of a phenopacket
 
         Returns:
-            A dictionary representation of the phenopacket
+            A dictionary representation of the phenopacket with snake_case keys
+
         """
         try:
             data = json.loads(json_str)
-            return data
+            converted_data = self.convert_dict_keys_to_snake_case(data)
+            self.validate_against_model(converted_data)
+            return converted_data
         except Exception as e:
             self.logger.error(f"Error parsing phenopacket JSON: {e}")
             return {}
 
     def parse_from_jsonl(self, jsonl_line: str) -> Dict[str, Any]:
         """
-        Parse a phenopacket from a JSONL line.
+        Parse a phenopacket from a JSONL line, converting camelCase to snake_case.
 
         Args:
             jsonl_line: A line from a JSONL file
 
         Returns:
-            A dictionary representation of the phenopacket
+            A dictionary representation of the phenopacket with snake_case keys
+
         """
         try:
             data = json.loads(jsonl_line)
-            return data
+            converted_data = self.convert_dict_keys_to_snake_case(data)
+            self.validate_against_model(converted_data)
+            return converted_data
         except Exception as e:
             self.logger.error(f"Error parsing JSONL line: {e}")
             return {}

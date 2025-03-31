@@ -1,5 +1,6 @@
 import types
 from typing import Dict, List
+
 import pytest
 import yaml
 from koza.app import KozaApp
@@ -70,26 +71,37 @@ def phenopacket_test_output_format() -> str:
 
 @pytest.fixture
 def phenopacket_mock_koza(
-    phenopacket_yaml, phenopacket_translation_table, phenopacket_test_output, phenopacket_test_output_format, phenopacket_test_file
+    phenopacket_yaml,
+    phenopacket_translation_table,
+    phenopacket_test_output,
+    phenopacket_test_output_format,
+    phenopacket_test_file,
 ) -> KozaApp:
     return get_mock_koza(
-        phenopacket_yaml, phenopacket_translation_table, phenopacket_test_output, phenopacket_test_output_format, phenopacket_test_file
+        phenopacket_yaml,
+        phenopacket_translation_table,
+        phenopacket_test_output,
+        phenopacket_test_output_format,
+        phenopacket_test_file,
     )
 
 
 @pytest.fixture
 def row_group_1(phenopacket_mock_koza) -> List[Dict]:
-    return get_koza_rows(phenopacket_mock_koza, 3)   # Example: first 3 rows
+    return get_koza_rows(phenopacket_mock_koza, 3)  # Example: first 3 rows
+
 
 @pytest.fixture
 def row_group_2(phenopacket_mock_koza) -> List[Dict]:
-    _ = get_koza_rows(phenopacket_mock_koza, 3)      # skip first 3
-    return get_koza_rows(phenopacket_mock_koza, 4)   # next 4 rows
+    _ = get_koza_rows(phenopacket_mock_koza, 3)  # skip first 3
+    return get_koza_rows(phenopacket_mock_koza, 4)  # next 4 rows
+
 
 @pytest.fixture
 def row_group_3(phenopacket_mock_koza) -> List[Dict]:
-    _ = get_koza_rows(phenopacket_mock_koza, 7)      # skip first 7
-    return get_koza_rows(phenopacket_mock_koza, 3)   # last 3 rows
+    _ = get_koza_rows(phenopacket_mock_koza, 7)  # skip first 7
+    return get_koza_rows(phenopacket_mock_koza, 3)  # last 3 rows
+
 
 def test_row_group_1_structure(row_group_1):
     assert len(row_group_1) == 3

@@ -1,10 +1,11 @@
 """Test parsing individual entities from a phenopacket."""
+
 import json
 
 import pytest
 
-from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
 from phenopacket_ingest.models import PhenopacketRecord
+from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
 from phenopacket_ingest.transformer.phenopacket_transformer import PhenopacketTransformer
 
 COMPLETE_PHENOPACKET = {
@@ -13,90 +14,33 @@ COMPLETE_PHENOPACKET = {
         "id": "patient:1",
         "alternate_ids": ["alt:1", "alt:2"],
         "sex": "FEMALE",
-        "time_at_last_encounter": {
-            "age": {
-                "iso8601duration": "P42Y"
-            }
-        },
-        "taxonomy": {
-            "id": "NCBITaxon:9606",
-            "label": "Homo sapiens"
-        }
+        "time_at_last_encounter": {"age": {"iso8601duration": "P42Y"}},
+        "taxonomy": {"id": "NCBITaxon:9606", "label": "Homo sapiens"},
     },
     "phenotypic_features": [
         {
-            "type": {
-                "id": "HP:0001250",
-                "label": "Seizure"
-            },
+            "type": {"id": "HP:0001250", "label": "Seizure"},
             "excluded": False,
-            "severity": {
-                "id": "HP:0012828",
-                "label": "Severe"
-            },
-            "modifiers": [
-                {
-                    "id": "HP:0032224",
-                    "label": "Worsened by febrile illness"
-                }
-            ],
-            "onset": {
-                "age": {
-                    "iso8601duration": "P2Y6M"
-                }
-            },
+            "severity": {"id": "HP:0012828", "label": "Severe"},
+            "modifiers": [{"id": "HP:0032224", "label": "Worsened by febrile illness"}],
+            "onset": {"age": {"iso8601duration": "P2Y6M"}},
             "evidence": [
                 {
-                    "evidence_code": {
-                        "id": "ECO:0000033",
-                        "label": "traceable author statement"
-                    },
-                    "reference": {
-                        "id": "PMID:30566666",
-                        "description": "Publication describing the case"
-                    }
+                    "evidence_code": {"id": "ECO:0000033", "label": "traceable author statement"},
+                    "reference": {"id": "PMID:30566666", "description": "Publication describing the case"},
                 }
-            ]
+            ],
         },
-        {
-            "type": {
-                "id": "HP:0001263",
-                "label": "Developmental delay"
-            },
-            "excluded": False
-        },
-        {
-            "type": {
-                "id": "HP:0000252",
-                "label": "Microcephaly"
-            },
-            "excluded": True
-        }
+        {"type": {"id": "HP:0001263", "label": "Developmental delay"}, "excluded": False},
+        {"type": {"id": "HP:0000252", "label": "Microcephaly"}, "excluded": True},
     ],
     "diseases": [
         {
-            "term": {
-                "id": "MONDO:0100038",
-                "label": "KCNT1-related epilepsy"
-            },
+            "term": {"id": "MONDO:0100038", "label": "KCNT1-related epilepsy"},
             "excluded": False,
-            "onset": {
-                "age": {
-                    "iso8601duration": "P2Y"
-                }
-            },
-            "disease_stage": [
-                {
-                    "id": "NCIT:C28554",
-                    "label": "Early Stage"
-                }
-            ],
-            "clinical_tnm_finding": [
-                {
-                    "id": "NCIT:C48232",
-                    "label": "T2 Stage Finding"
-                }
-            ]
+            "onset": {"age": {"iso8601duration": "P2Y"}},
+            "disease_stage": [{"id": "NCIT:C28554", "label": "Early Stage"}],
+            "clinical_tnm_finding": [{"id": "NCIT:C48232", "label": "T2 Stage Finding"}],
         }
     ],
     "biosamples": [
@@ -105,51 +49,19 @@ COMPLETE_PHENOPACKET = {
             "individual_id": "patient:1",
             "derived_from_id": "biosample:parent",
             "description": "Blood sample",
-            "sampled_tissue": {
-                "id": "UBERON:0000178",
-                "label": "Blood"
-            },
-            "time_of_collection": {
-                "age": {
-                    "iso8601duration": "P3Y"
-                }
-            },
-            "histological_diagnosis": {
-                "id": "NCIT:C38757",
-                "label": "Normal"
-            },
-            "tumor_progression": {
-                "id": "NCIT:C84509",
-                "label": "Primary Malignant Neoplasm"
-            },
-            "tumor_grade": {
-                "id": "NCIT:C28076",
-                "label": "Grade 2"
-            },
-            "diagnostic_markers": [
-                {
-                    "id": "NCIT:C13951",
-                    "label": "CD19"
-                }
-            ]
+            "sampled_tissue": {"id": "UBERON:0000178", "label": "Blood"},
+            "time_of_collection": {"age": {"iso8601duration": "P3Y"}},
+            "histological_diagnosis": {"id": "NCIT:C38757", "label": "Normal"},
+            "tumor_progression": {"id": "NCIT:C84509", "label": "Primary Malignant Neoplasm"},
+            "tumor_grade": {"id": "NCIT:C28076", "label": "Grade 2"},
+            "diagnostic_markers": [{"id": "NCIT:C13951", "label": "CD19"}],
         }
     ],
     "measurements": [
         {
             "description": "Blood pressure measurement",
-            "assay": {
-                "id": "LOINC:8462-4",
-                "label": "Diastolic blood pressure"
-            },
-            "value": {
-                "quantity": {
-                    "value": 80,
-                    "unit": {
-                        "id": "UCUM:mm[Hg]",
-                        "label": "mmHg"
-                    }
-                }
-            }
+            "assay": {"id": "LOINC:8462-4", "label": "Diastolic blood pressure"},
+            "value": {"quantity": {"value": 80, "unit": {"id": "UCUM:mm[Hg]", "label": "mmHg"}}},
         }
     ],
     "interpretations": [
@@ -157,77 +69,45 @@ COMPLETE_PHENOPACKET = {
             "id": "interpretation.1",
             "progress_status": "SOLVED",
             "diagnosis": {
-                "disease": {
-                    "id": "MONDO:0100038",
-                    "label": "KCNT1-related epilepsy"
-                },
+                "disease": {"id": "MONDO:0100038", "label": "KCNT1-related epilepsy"},
                 "genomic_interpretations": [
                     {
                         "subject_or_biosample_id": "patient:1",
                         "interpretation_status": "CAUSATIVE",
-                        "gene": {
-                            "value_id": "HGNC:18865",
-                            "symbol": "KCNT1"
-                        },
+                        "gene": {"value_id": "HGNC:18865", "symbol": "KCNT1"},
                         "variant_interpretation": {
                             "acmg_pathogenicity_classification": "PATHOGENIC",
                             "therapeutic_actionability": "ACTIONABLE",
                             "variation_descriptor": {
                                 "id": "variant:1",
-                                "gene_context": {
-                                    "value_id": "HGNC:18865",
-                                    "symbol": "KCNT1"
-                                },
+                                "gene_context": {"value_id": "HGNC:18865", "symbol": "KCNT1"},
                                 "vcf_record": {
                                     "genome_assembly": "GRCh38",
                                     "chrom": "9",
                                     "pos": "138650634",
                                     "ref": "C",
-                                    "alt": "G"
+                                    "alt": "G",
                                 },
                                 "expressions": [
-                                    {
-                                        "syntax": "HGVS",
-                                        "value": "NM_020822.2:c.2800G>A"
-                                    },
-                                    {
-                                        "syntax": "HGVS.p",
-                                        "value": "NP_065873.2:p.Ala934Thr"
-                                    }
+                                    {"syntax": "HGVS", "value": "NM_020822.2:c.2800G>A"},
+                                    {"syntax": "HGVS.p", "value": "NP_065873.2:p.Ala934Thr"},
                                 ],
-                                "allelic_state": {
-                                    "id": "GENO:0000135",
-                                    "label": "heterozygous"
-                                }
-                            }
-                        }
+                                "allelic_state": {"id": "GENO:0000135", "label": "heterozygous"},
+                            },
+                        },
                     }
-                ]
-            }
+                ],
+            },
         }
     ],
     "medical_actions": [
         {
             "treatment": {
-                "agent": {
-                    "id": "CHEBI:6801",
-                    "label": "Ketogenic diet"
-                },
-                "route_of_administration": {
-                    "id": "CHEBI:70989",
-                    "label": "Oral"
-                }
+                "agent": {"id": "CHEBI:6801", "label": "Ketogenic diet"},
+                "route_of_administration": {"id": "CHEBI:70989", "label": "Oral"},
             },
-            "treatment_intent": {
-                "id": "HP:0025265",
-                "label": "Seizure management"
-            },
-            "adverse_events": [
-                {
-                    "id": "HP:0031273",
-                    "label": "Gastrointestinal disorder"
-                }
-            ]
+            "treatment_intent": {"id": "HP:0025265", "label": "Seizure management"},
+            "adverse_events": [{"id": "HP:0031273", "label": "Gastrointestinal disorder"}],
         }
     ],
     "files": [
@@ -242,17 +122,11 @@ COMPLETE_PHENOPACKET = {
         "submitted_by": "Hospital X",
         "phenopacket_schema_version": "2.0",
         "external_references": [
-            {
-                "id": "PMID:33146646",
-                "description": "Article describing the case"
-            },
-            {
-                "id": "PMID:32489073",
-                "description": "Review of KCNT1-related epilepsy"
-            }
-        ]
+            {"id": "PMID:33146646", "description": "Article describing the case"},
+            {"id": "PMID:32489073", "description": "Review of KCNT1-related epilepsy"},
+        ],
     },
-    "cohort": "Epilepsy Study"
+    "cohort": "Epilepsy Study",
 }
 
 
@@ -261,6 +135,7 @@ def phenopacket_record():
     """Create a PhenopacketRecord from the complete phenopacket."""
     parser = PhenopacketParser()
     record = parser.parse_from_json(json.dumps(COMPLETE_PHENOPACKET))
+    print(record)
     return PhenopacketRecord.model_validate(record)
 
 
@@ -418,7 +293,7 @@ def test_medical_action_parsing(phenopacket_record):
     assert len(medical_actions) == 1
 
     action = medical_actions[0]
-    assert action.treatment.agent.id ==  "CHEBI:6801"
+    assert action.treatment.agent.id == "CHEBI:6801"
     assert action.treatment.agent.label == "Ketogenic diet"
     assert action.treatment.route_of_administration.id == "CHEBI:70989"
     assert action.treatment_intent.id == "HP:0025265"
@@ -528,7 +403,9 @@ def test_biolink_entity_generation(phenopacket_record):
     variant_assoc_count = sum(1 for t in entity_types if "Variant" in t)
 
     assert case_count == 6, f"Expected 6 Case, got {case_count} ({type_counts})"
-    assert phenotype_assoc_count == 2, f"Expected 2 CaseToPhenotypicFeatureAssociation, got {phenotype_assoc_count} ({type_counts})"
+    assert (
+        phenotype_assoc_count == 2
+    ), f"Expected 2 CaseToPhenotypicFeatureAssociation, got {phenotype_assoc_count} ({type_counts})"
     assert disease_assoc_count == 1, f"Expected 1 CaseToDiseaseAssociation, got {disease_assoc_count} ({type_counts})"
     assert gene_assoc_count == 1, f"Expected 1 CaseToGeneAssociation, got {gene_assoc_count} ({type_counts})"
     assert variant_assoc_count == 1, f"Expected 1 CaseToVariantAssociation, got {variant_assoc_count} ({type_counts})"

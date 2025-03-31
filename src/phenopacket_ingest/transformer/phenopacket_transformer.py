@@ -7,24 +7,25 @@ into Biolink model entities for knowledge graph integration.
 
 import json
 import logging
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Union
 
 from phenopacket_ingest.models import (
-    PhenopacketRecord,
-    Subject,
     Disease,
+    PhenopacketRecord,
     PhenotypicFeature,
     Variant,
-    CaseToDiseaseAssociation,
-    CaseToGeneAssociation,
-    CaseToVariantAssociation,
 )
 
 try:
     from biolink_model.datamodel.pydanticmodel_v2 import (
-        Case,
+        AgentTypeEnum,
         BiologicalSex,
-        CaseToPhenotypicFeatureAssociation
+        Case,
+        CaseToDiseaseAssociation,
+        CaseToGeneAssociation,
+        CaseToPhenotypicFeatureAssociation,
+        CaseToVariantAssociation,
+        KnowledgeLevelEnum,
     )
 
     BIOLINK_AVAILABLE = True
@@ -60,13 +61,23 @@ class PhenopacketTransformer:
 
         Returns:
             A validated PhenopacketRecord or None if validation fails
+
         """
         # Handle fields that might be serialized as strings
         for field in [
-            "phenotypic_features", "observed_phenotypes", "excluded_phenotypes",
-            "biosamples", "measurements", "medical_actions", "files",
-            "diseases", "interpretations", "meta_data",
-            "external_references", "variant_hgvs", "pmids"
+            "phenotypic_features",
+            "observed_phenotypes",
+            "excluded_phenotypes",
+            "biosamples",
+            "measurements",
+            "medical_actions",
+            "files",
+            "diseases",
+            "interpretations",
+            "meta_data",
+            "external_references",
+            "variant_hgvs",
+            "pmids",
         ]:
             if isinstance(row.get(field), str) and row.get(field):
                 try:
@@ -92,51 +103,35 @@ class PhenopacketTransformer:
 
         Returns:
             A Biolink Case entity or fallback object if required fields are missing
+
         """
         if not record.subject.id:
             return None
 
+        if not record.subject.sex:
+            print("BiologicalSex not given.")
+
+        def convert_sex_to_attribute(sex_string):
+            if not sex_string:
+                return ""
+            sex_map = {"FEMALE": "PATO:0000383", "MALE": "PATO:0000384", "UNKNOWN": "NCIT:C17998"}
+            return sex_map.get(sex_string.upper(), "NCIT:C17998")
+
         if BIOLINK_AVAILABLE:
             case = Case(
-                id=f"CASE:{record.subject.id}",
-                name=f"Subject {record.subject.id}",
-                provided_by=["infores:phenopacket-store"]
+                id=record.id,
+                name=record.subject.id,
+                has_attribute=[convert_sex_to_attribute(record.subject.sex)],
+                provided_by=["infores:phenopacket-store"],
             )
-
-            # Add sex information if available
-            if record.subject.sex:
-                sex_value = record.subject.sex.value if hasattr(record.subject.sex, 'value') else record.subject.sex
-                if isinstance(sex_value, str):
-                    sex_id = None
-                    if sex_value == "MALE":
-                        sex_id = "PATO:0000384"
-                    elif sex_value == "FEMALE":
-                        sex_id = "PATO:0000383"
-                    #
-                    # if sex_id:
-                    #     # TODO: Case has no sex -&&- specify attribute type
-                    #     case.sex = BiologicalSex(
-                    #         id=sex_id,
-                    #         name=sex_value.capitalize(),
-                    #         has_attribute_type="biolink:hasAttributeType"
-                    #     )
-
-            # TODO: Age and cohort not in case
-            # if (hasattr(record.subject, 'time_at_last_encounter') and
-            #         record.subject.time_at_last_encounter and
-            #         hasattr(record.subject.time_at_last_encounter, 'age')):
-            #     case.age = record.subject.time_at_last_encounter.age
-            #
-            # if record.cohort:
-            #     case.in_cohort = record.cohort
 
         return case
 
     @staticmethod
     def transform_phenotypic_features(
-            case_id: str,
-            phenotypic_features: List[Union[PhenotypicFeature, Dict[str, Any]]],
-            pmids: Optional[List[str]] = None
+        case_id: str,
+        phenotypic_features: List[Union[PhenotypicFeature, Dict[str, Any]]],
+        pmids: Optional[List[str]] = None,
     ) -> List[CaseToPhenotypicFeatureAssociation]:
         """
         Transform phenotypic features into case-to-phenotypic-feature associations.
@@ -148,6 +143,7 @@ class PhenopacketTransformer:
 
         Returns:
             List of case-to-phenotypic-feature associations
+
         """
         associations = []
 
@@ -158,24 +154,28 @@ class PhenopacketTransformer:
             if not feature_id:
                 continue
 
-            onset = None
-            if hasattr(feature, 'onset'):
-                if hasattr(feature.onset, 'age'):
-                    onset = feature.onset.age
-            elif isinstance(feature, dict) and 'onset' in feature:
-                if isinstance(feature['onset'], dict) and 'age' in feature['onset']:
-                    onset = feature['onset']['age']
+            onset = ""  # Default to empty string instead of None
+            if hasattr(feature, 'onset') and feature.onset:
+                if hasattr(feature.onset, 'age') and feature.onset.age:
+                    if hasattr(feature.onset.age, 'iso8601duration'):
+                        onset = feature.onset.age.iso8601duration or ""
+            elif isinstance(feature, dict) and 'onset' in feature and feature['onset']:
+                if isinstance(feature['onset'], dict) and 'age' in feature['onset'] and feature['onset']['age']:
+                    if isinstance(feature['onset']['age'], dict) and 'iso8601duration' in feature['onset']['age']:
+                        onset = feature['onset']['age']['iso8601duration'] or ""
+                    elif isinstance(feature['onset']['age'], str):
+                        onset = feature['onset']['age'] or ""
             # TODO: no onset_qualifier,  knowledge_level, agent_type
             assoc = CaseToPhenotypicFeatureAssociation(
                 subject=case_id,
                 id=case_id,
                 predicate="biolink:has_phenotype",
                 object=feature_id,
-                knowledge_level="observation",  # Provide an appropriate value
-                agent_type="manual_agent",
-                # onset=onset,
+                knowledge_level=KnowledgeLevelEnum.observation,
+                agent_type=AgentTypeEnum.manual_agent,
+                object_aspect_qualifier=str(onset),
                 negated=excluded,
-                publications=pmids if pmids else None
+                publications=pmids if pmids else None,
             )
             associations.append(assoc)
 
@@ -183,9 +183,7 @@ class PhenopacketTransformer:
 
     @staticmethod
     def transform_diseases(
-            case_id: str,
-            diseases: List[Union[Disease, Dict[str, Any]]],
-            pmids: Optional[List[str]] = None
+        case_id: str, diseases: List[Union[Disease, Dict[str, Any]]], pmids: Optional[List[str]] = None
     ) -> List[CaseToDiseaseAssociation]:
         """
         Transform diseases into case-to-disease associations.
@@ -197,6 +195,7 @@ class PhenopacketTransformer:
 
         Returns:
             List of case-to-disease associations
+
         """
         associations = []
 
@@ -213,19 +212,27 @@ class PhenopacketTransformer:
             if not disease_id:
                 continue
 
-            onset = None
-            if hasattr(disease, 'onset'):
-                if hasattr(disease.onset, 'age'):
-                    onset = disease.onset.age
-            elif isinstance(disease, dict) and 'onset' in disease:
-                if isinstance(disease['onset'], dict) and 'age' in disease['onset']:
-                    onset = disease['onset']['age']
-            # TODO: no onset
+            onset = ""  # Default to empty string instead of None
+            if hasattr(disease, 'onset') and disease.onset:
+                if hasattr(disease.onset, 'age') and disease.onset.age:
+                    if hasattr(disease.onset.age, 'iso8601duration'):
+                        onset = disease.onset.age.iso8601duration or ""
+            elif isinstance(disease, dict) and 'onset' in disease and disease['onset']:
+                if isinstance(disease['onset'], dict) and 'age' in disease['onset'] and disease['onset']['age']:
+                    if isinstance(disease['onset']['age'], dict) and 'iso8601duration' in disease['onset']['age']:
+                        onset = disease['onset']['age']['iso8601duration'] or ""
+                    elif isinstance(disease['onset']['age'], str):
+                        onset = disease['onset']['age'] or ""
             assoc = CaseToDiseaseAssociation(
+                id=case_id,
                 subject=case_id,
+                predicate="biolink:has_disease",
                 object=disease_id,
-                onset_qualifier=onset.iso8601duration,
-                publications=pmids if pmids else None
+                knowledge_level=KnowledgeLevelEnum.observation,
+                agent_type=AgentTypeEnum.manual_agent,
+                onset_qualifier=onset,
+                object_aspect_qualifier=str(onset),
+                publications=pmids if pmids else None,
             )
             associations.append(assoc)
 
@@ -233,9 +240,7 @@ class PhenopacketTransformer:
 
     @staticmethod
     def transform_genes(
-            case_id: str,
-            genes: List[Dict[str, Any]],
-            pmids: Optional[List[str]] = None
+        case_id: str, genes: List[Dict[str, Any]], pmids: Optional[List[str]] = None
     ) -> List[CaseToGeneAssociation]:
         """
         Transform genes into case-to-gene associations.
@@ -247,6 +252,7 @@ class PhenopacketTransformer:
 
         Returns:
             List of case-to-gene associations
+
         """
         associations = []
 
@@ -257,9 +263,13 @@ class PhenopacketTransformer:
 
             # Create association
             assoc = CaseToGeneAssociation(
+                id=case_id,
                 subject=case_id,
+                predicate="biolink:has_gene",
                 object=gene_id,
-                publications=pmids if pmids else None
+                knowledge_level=KnowledgeLevelEnum.observation,  # Provide an appropriate value
+                agent_type=AgentTypeEnum.manual_agent,
+                publications=pmids if pmids else None,
             )
             associations.append(assoc)
 
@@ -267,9 +277,7 @@ class PhenopacketTransformer:
 
     @staticmethod
     def transform_variants(
-            case_id: str,
-            variants: List[Union[Variant, Dict[str, Any]]],
-            pmids: Optional[List[str]] = None
+        case_id: str, variants: List[Union[Variant, Dict[str, Any]]], pmids: Optional[List[str]] = None
     ) -> List[CaseToVariantAssociation]:
         """
         Transform variants into case-to-variant associations.
@@ -281,6 +289,7 @@ class PhenopacketTransformer:
 
         Returns:
             List of case-to-variant associations
+
         """
         associations = []
 
@@ -313,13 +322,25 @@ class PhenopacketTransformer:
             if not variant_id:
                 continue
 
+            def convert_zygosity_to_attribute(zygosity_string):
+                zygosity_map = {
+                    "HETEROZYGOUS": "GENO:0000135",
+                    "HOMOZYGOUS": "GENO:0000136",
+                    "HEMIZYGOUS": "GENO:0000134",
+                    "UNKNOWN": "GENO:0000137",
+                }
+                return zygosity_map.get(zygosity_string.upper(), "GENO:0000137")
+
+            # TODO: zygosity in model and negated needs to go from the others ( maybe from mixin?)
             assoc = CaseToVariantAssociation(
+                id=case_id,
                 subject=case_id,
                 predicate="biolink:has_sequence_variant",
                 object=variant_id,
-                zygosity=zygosity,
-                interpretation_status=interpretation_status,
-                publications=pmids if pmids else None
+                knowledge_level=KnowledgeLevelEnum.observation,
+                agent_type=AgentTypeEnum.manual_agent,
+                has_attribute=[convert_zygosity_to_attribute(zygosity.upper())],
+                publications=pmids if pmids else None,
             )
             associations.append(assoc)
 
@@ -335,6 +356,7 @@ class PhenopacketTransformer:
 
         Returns:
             List of Biolink entities
+
         """
         entities = []
 
@@ -352,43 +374,22 @@ class PhenopacketTransformer:
 
         case_id = case.id if hasattr(case, 'id') else case.get('id', '')
 
-        if hasattr(record, 'observed_phenotypes') and record.observed_phenotypes:
+        if hasattr(record, 'phenotypic_features') and record.phenotypic_features:
             phenotype_assocs = cls.transform_phenotypic_features(
-                case_id=case_id,
-                phenotypic_features=record.observed_phenotypes,
-                pmids=record.pmids
-            )
-            entities.extend(phenotype_assocs)
-        elif hasattr(record, 'phenotypic_features') and record.phenotypic_features:
-            phenotype_assocs = cls.transform_phenotypic_features(
-                case_id=case_id,
-                phenotypic_features=record.phenotypic_features,
-                pmids=record.pmids
+                case_id=case_id, phenotypic_features=record.phenotypic_features, pmids=record.pmids
             )
             entities.extend(phenotype_assocs)
 
         if hasattr(record, 'diseases') and record.diseases:
-            disease_assocs = cls.transform_diseases(
-                case_id=case_id,
-                diseases=record.diseases,
-                pmids=record.pmids
-            )
+            disease_assocs = cls.transform_diseases(case_id=case_id, diseases=record.diseases, pmids=record.pmids)
             entities.extend(disease_assocs)
 
         if hasattr(record, 'genes') and record.genes:
-            gene_assocs = cls.transform_genes(
-                case_id=case_id,
-                genes=record.genes,
-                pmids=record.pmids
-            )
+            gene_assocs = cls.transform_genes(case_id=case_id, genes=record.genes, pmids=record.pmids)
             entities.extend(gene_assocs)
 
         if hasattr(record, 'variants') and record.variants:
-            variant_assocs = cls.transform_variants(
-                case_id=case_id,
-                variants=record.variants,
-                pmids=record.pmids
-            )
+            variant_assocs = cls.transform_variants(case_id=case_id, variants=record.variants, pmids=record.pmids)
             entities.extend(variant_assocs)
 
         return entities
@@ -403,6 +404,7 @@ class PhenopacketTransformer:
 
         Returns:
             List of Biolink entities
+
         """
         try:
             data = json.loads(line)

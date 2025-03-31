@@ -6,7 +6,8 @@ the phenopacket schema.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel
 
 
 class OntologyClass(BaseModel):
@@ -15,6 +16,7 @@ class OntologyClass(BaseModel):
 
     This class represents an ontology term with an ID (CURIE) and a human-readable label.
     """
+
     id: str
     label: Optional[str] = None
 

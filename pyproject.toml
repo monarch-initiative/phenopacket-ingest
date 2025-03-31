@@ -12,7 +12,7 @@ importlib-metadata = ">=4.8.0"
 koza = ">=0.6.0"
 kghub-downloader = ">=0.3.11"
 kgx = ">=2.4.0"
-biolink-model = "^4.2.0"
+biolink-model = {git = "https://github.com/iQuxLE/biolink-model.git",  branch="pr_phenopackets"}
 duckdb = ">=0.10.2"
 loguru = "*"
 phenopacket-store-toolkit = "0.1.4"

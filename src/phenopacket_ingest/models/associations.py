@@ -6,7 +6,7 @@ that can be used for mapping to the Biolink model.
 """
 
 import uuid
-from typing import Dict, List, Optional, Any
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 

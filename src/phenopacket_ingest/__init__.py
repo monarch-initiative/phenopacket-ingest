@@ -12,9 +12,9 @@ __version__ = "0.1.0"
 
 # Import main classes for easier access
 
-from phenopacket_ingest.registry.registry_service import PhenopacketRegistryService
-from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
 from phenopacket_ingest.parser.phenopacket_extractor import PhenopacketExtractor
+from phenopacket_ingest.parser.phenopacket_parser import PhenopacketParser
+from phenopacket_ingest.registry.registry_service import PhenopacketRegistryService
 from phenopacket_ingest.transformer.phenopacket_transformer import PhenopacketTransformer
 
 __all__ = [

@@ -39,5 +39,6 @@ def get_config() -> PhenopacketStoreConfig:
 
     Returns:
         A PhenopacketStoreConfig object with current settings
+
     """
     return PhenopacketStoreConfig()
