@@ -13,13 +13,8 @@ node_properties:
   - id
   - name
   - category
-  - symbol
-  - sex
-  - in_taxon
-  - in_taxon_label
   - provided_by
-  - xref
-  - reference
+  - has_attribute
 
 edge_properties:
   - id
@@ -28,13 +23,12 @@ edge_properties:
   - object
   - knowledge_level
   - agent_type
-  - primary_knowledge_source
-  - aggregator_knowledge_source
-  - onset_qualifier
-  - qualified_predicate
+  - has_attribute
+  - negated
+  - object_aspect_qualifier
   - publications
 
-transform_code: "./src/phenopacket_ingest/ingest.py"
+transform_code: "../src/phenopacket_ingest/transform.py"
 transform_mode: "flat"
 
 # ⚠️ Double-check that the `data/phenopacket_genes.jsonl` path contains actual test records.

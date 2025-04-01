@@ -77,7 +77,7 @@ def phenopacket_test_output() -> str:
 
 @pytest.fixture
 def phenopacket_test_output_format() -> str:
-    return "jsonl"
+    return "tsv"
 
 
 @pytest.fixture
