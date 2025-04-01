@@ -18,7 +18,7 @@ class PhenopacketStoreConfig:
     repo_name: str = "phenopacket-store"
 
     data_dir: str = "data/phenopackets"
-    output_dir: str = "data/phenopackets/output"
+    output_dir: str = "data"
 
     release_tag: Optional[str] = None
     timeout: float = 30.0
