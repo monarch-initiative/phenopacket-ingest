@@ -38,7 +38,6 @@ def get_mock_koza(
             self._entities.extend(list(entities))
         else:
             self._entities = list(entities)
-        print("Writing %d entities", len(entities))
 
     koza_app.write = types.MethodType(_mock_write, koza_app)
     return koza_app
