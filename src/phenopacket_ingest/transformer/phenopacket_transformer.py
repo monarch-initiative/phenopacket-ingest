@@ -111,17 +111,11 @@ class PhenopacketTransformer:
         if not record.subject.sex:
             print("BiologicalSex not given.")
 
-        def convert_sex_to_attribute(sex_string):
-            if not sex_string:
-                return ""
-            sex_map = {"FEMALE": "PATO:0000383", "MALE": "PATO:0000384", "UNKNOWN": "NCIT:C17998"}
-            return sex_map.get(sex_string.upper(), "NCIT:C17998")
-
         if BIOLINK_AVAILABLE:
             case = Case(
-                id=record.id,
+                id=f"PPKT_{record.id}",
                 name=record.subject.id,
-                has_attribute=[convert_sex_to_attribute(record.subject.sex)],
+                sex=str(record.subject.sex.value),
                 provided_by=["infores:phenopacket-store"],
             )
 
@@ -165,15 +159,14 @@ class PhenopacketTransformer:
                         onset = feature['onset']['age']['iso8601duration'] or ""
                     elif isinstance(feature['onset']['age'], str):
                         onset = feature['onset']['age'] or ""
-            # TODO: no onset_qualifier,  knowledge_level, agent_type
             assoc = CaseToPhenotypicFeatureAssociation(
                 subject=case_id,
-                id=case_id,
+                id=f"PPKT_{case_id}",
                 predicate="biolink:has_phenotype",
                 object=feature_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
-                object_aspect_qualifier=str(onset),
+                onset_qualifier=str(onset),
                 negated=excluded,
                 publications=pmids if pmids else None,
             )
@@ -223,15 +216,15 @@ class PhenopacketTransformer:
                         onset = disease['onset']['age']['iso8601duration'] or ""
                     elif isinstance(disease['onset']['age'], str):
                         onset = disease['onset']['age'] or ""
+
             assoc = CaseToDiseaseAssociation(
-                id=case_id,
+                id=f"PPKT_{case_id}",
                 subject=case_id,
                 predicate="biolink:has_disease",
                 object=disease_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
-                onset_qualifier=onset,
-                object_aspect_qualifier=str(onset),
+                onset_qualifier=str(onset),
                 publications=pmids if pmids else None,
             )
             associations.append(assoc)
@@ -261,13 +254,12 @@ class PhenopacketTransformer:
             if not gene_id:
                 continue
 
-            # Create association
             assoc = CaseToGeneAssociation(
-                id=case_id,
+                id=f"PPKT_{case_id}",
                 subject=case_id,
                 predicate="biolink:has_gene",
                 object=gene_id,
-                knowledge_level=KnowledgeLevelEnum.observation,  # Provide an appropriate value
+                knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
                 publications=pmids if pmids else None,
             )
@@ -331,15 +323,14 @@ class PhenopacketTransformer:
                 }
                 return zygosity_map.get(zygosity_string.upper(), "GENO:0000137")
 
-            # TODO: zygosity in model and negated needs to go from the others ( maybe from mixin?)
             assoc = CaseToVariantAssociation(
-                id=case_id,
+                id=f"PPKT_{case_id}",
                 subject=case_id,
                 predicate="biolink:has_sequence_variant",
                 object=variant_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
-                has_attribute=[convert_zygosity_to_attribute(zygosity.upper())],
+                has_zygosity=convert_zygosity_to_attribute(zygosity.upper()),
                 publications=pmids if pmids else None,
             )
             associations.append(assoc)
