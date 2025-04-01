@@ -117,5 +117,7 @@ def row_group_3(phenopacket_mock_koza) -> List[Dict]:
 def test_row_group_1_structure(row_group_1):
     assert len(row_group_1) == 3
     for row in row_group_1:
-        assert "phenopacket_id" in row
-        assert "gene_symbol" in row
+        assert "id" in row
+        assert "subject_sex" in row
+        assert "disease_id" in row
+        assert "phenotypic_features" in row
