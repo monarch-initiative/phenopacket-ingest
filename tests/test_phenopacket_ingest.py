@@ -22,6 +22,7 @@ def get_mock_koza(
     with open(yaml_file, 'r') as source_fh:
         yaml_data = yaml.load(source_fh, Loader=UniqueIncludeLoader)
 
+    yaml_data['metadata'] = get_test_data_path("metadata.yaml")
     yaml_data['files'] = files
     source_config = PrimaryFileConfig(**yaml_data)
 
