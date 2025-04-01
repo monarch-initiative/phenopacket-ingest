@@ -364,22 +364,10 @@ def test_variants_extraction(phenopacket_record):
     assert variants[0].zygosity == "heterozygous"
 
 
-def test_observed_phenotypes_extraction(phenopacket_record):
+def test_phenotypes_extraction(phenopacket_record):
     """Test extraction of observed phenotypes."""
-    observed = phenopacket_record.observed_phenotypes
-
-    assert len(observed) == 2
-    assert observed[0].type.id == "HP:0001250"
-    assert observed[1].type.id == "HP:0001263"
-
-
-def test_excluded_phenotypes_extraction(phenopacket_record):
-    """Test extraction of excluded phenotypes."""
-    excluded = phenopacket_record.excluded_phenotypes
-
-    assert len(excluded) == 1
-    assert excluded[0].type.id == "HP:0000252"
-    assert excluded[0].excluded
+    observed = phenopacket_record.phenotypic_features
+    assert len(observed) == 3
 
 
 def test_biolink_entity_generation(phenopacket_record):
@@ -392,7 +380,7 @@ def test_biolink_entity_generation(phenopacket_record):
         type_counts[entity_type] = type_counts.get(entity_type, 0) + 1
     # We should have:
     # - 1 Case
-    # - 2 CaseToPhenotypicFeatureAssociation (observed phenotypes)
+    # - 3 CaseToPhenotypicFeatureAssociation (incl. negated)
     # - 1 CaseToDiseaseAssociation
     # - 1 CaseToGeneAssociation
     # - 1 CaseToVariantAssociation
@@ -402,9 +390,9 @@ def test_biolink_entity_generation(phenopacket_record):
     gene_assoc_count = sum(1 for t in entity_types if "Gene" in t)
     variant_assoc_count = sum(1 for t in entity_types if "Variant" in t)
 
-    assert case_count == 6, f"Expected 6 Case, got {case_count} ({type_counts})"
+    assert case_count == 7, f"Expected 6 Case, got {case_count} ({type_counts})"
     assert (
-        phenotype_assoc_count == 2
+        phenotype_assoc_count == 3
     ), f"Expected 2 CaseToPhenotypicFeatureAssociation, got {phenotype_assoc_count} ({type_counts})"
     assert disease_assoc_count == 1, f"Expected 1 CaseToDiseaseAssociation, got {disease_assoc_count} ({type_counts})"
     assert gene_assoc_count == 1, f"Expected 1 CaseToGeneAssociation, got {gene_assoc_count} ({type_counts})"
@@ -428,6 +416,4 @@ if __name__ == "__main__":
     test_pmids_extraction(phenopacket_record)
     test_genes_extraction(phenopacket_record)
     test_variants_extraction(phenopacket_record)
-    test_observed_phenotypes_extraction(phenopacket_record)
-    test_excluded_phenotypes_extraction(phenopacket_record)
     test_biolink_entity_generation(phenopacket_record)

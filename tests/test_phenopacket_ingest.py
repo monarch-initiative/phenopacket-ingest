@@ -7,7 +7,14 @@ from koza.app import KozaApp
 from koza.io.yaml_loader import UniqueIncludeLoader
 from koza.model.config.source_config import OutputFormat, PrimaryFileConfig
 from koza.model.source import Source
+from pathlib import Path
 
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(message)s'))
+logger.addHandler(handler)
 
 def get_mock_koza(
     yaml_file: str, translation_table: str, output_dir: str, output_format: str, files: List[str]
@@ -30,6 +37,7 @@ def get_mock_koza(
             self._entities.extend(list(entities))
         else:
             self._entities = list(entities)
+        print("Writing %d entities", len(entities))
 
     koza_app.write = types.MethodType(_mock_write, koza_app)
     return koza_app
@@ -43,25 +51,27 @@ def get_koza_rows(mock_koza: KozaApp, n_rows: int) -> List[Dict]:
             rows.append(row)
     return rows
 
+def get_test_data_path(relative_path: str) -> str:
+    return str(Path(__file__).parent.joinpath("data", relative_path).resolve())
 
 @pytest.fixture
 def phenopacket_yaml():
-    return "../tests/data/test_transform.yaml"
+    return get_test_data_path("test_transform.yaml")
 
 
 @pytest.fixture
 def phenopacket_translation_table() -> str:
-    return "../tests/data/translation_table.yaml"
+    return get_test_data_path("translation_table.yaml")
 
 
 @pytest.fixture
 def phenopacket_test_file() -> List[str]:
-    return ["../tests/data/phenopacket_genes.jsonl"]
+    return [get_test_data_path("phenopacket_genes.jsonl")]
 
 
 @pytest.fixture
 def phenopacket_test_output() -> str:
-    return "tests/output/phenopacket_test"
+    return "test-output/phenopacket_test"
 
 
 @pytest.fixture
