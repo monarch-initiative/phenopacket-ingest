@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "phenopacket_ingest"
 version = "0.0.0"
-description = "This is the project description."
+description = "Ingesting phenopackets into the Monarch KG"
 authors = ["Carlo Kroll <krollc@unc.edu>"]
 license = "BSD-3"
 readme = "README.md"
@@ -12,7 +12,7 @@ importlib-metadata = ">=4.8.0"
 koza = ">=0.6.0"
 kghub-downloader = ">=0.3.11"
 kgx = ">=2.4.0"
-biolink-model = {git = "https://github.com/iQuxLE/biolink-model.git",  branch="pr_phenopackets"}
+biolink-model = {git = "https://github.com/biolink/biolink-model.git",  branch="main"}
 duckdb = ">=0.10.2"
 loguru = "*"
 phenopacket-store-toolkit = "0.1.4"
