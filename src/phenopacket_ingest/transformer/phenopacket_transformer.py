@@ -13,7 +13,6 @@ from phenopacket_ingest.models import (
     Disease,
     PhenopacketRecord,
     PhenotypicFeature,
-    Variant,
 )
 
 try:
@@ -24,7 +23,6 @@ try:
         CaseToDiseaseAssociation,
         CaseToGeneAssociation,
         CaseToPhenotypicFeatureAssociation,
-        CaseToVariantAssociation,
         KnowledgeLevelEnum,
     )
 
@@ -41,7 +39,6 @@ class PhenopacketTransformer:
     This class provides methods to transform phenopacket data into:
     - Case entities
     - Disease associations
-    - Variant associations
     - Gene associations
     - Phenotypic feature associations
     """
@@ -113,10 +110,9 @@ class PhenopacketTransformer:
 
         if BIOLINK_AVAILABLE:
             case = Case(
-                id=f"PPKT_{record.id}",
+                id=f"PPKT:{record.id}",
                 name=record.subject.id,
-                sex=str(record.subject.sex.value),
-                provided_by=["infores:phenopacket-store"],
+                has_biological_sex=str(record.subject.sex.value),
             )
 
         return case
@@ -161,7 +157,7 @@ class PhenopacketTransformer:
                         onset = feature['onset']['age'] or ""
             assoc = CaseToPhenotypicFeatureAssociation(
                 subject=case_id,
-                id=f"PPKT_{case_id}",
+                id=f"PPKT:{case_id}",
                 predicate="biolink:has_phenotype",
                 object=feature_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
@@ -218,7 +214,7 @@ class PhenopacketTransformer:
                         onset = disease['onset']['age'] or ""
 
             assoc = CaseToDiseaseAssociation(
-                id=f"PPKT_{case_id}",
+                id=f"PPKT:{case_id}",
                 subject=case_id,
                 predicate="biolink:has_disease",
                 object=disease_id,
@@ -255,82 +251,12 @@ class PhenopacketTransformer:
                 continue
 
             assoc = CaseToGeneAssociation(
-                id=f"PPKT_{case_id}",
+                id=f"PPKT:{case_id}",
                 subject=case_id,
                 predicate="biolink:has_gene",
                 object=gene_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
-                publications=pmids if pmids else None,
-            )
-            associations.append(assoc)
-
-        return associations
-
-    @staticmethod
-    def transform_variants(
-        case_id: str, variants: List[Union[Variant, Dict[str, Any]]], pmids: Optional[List[str]] = None
-    ) -> List[CaseToVariantAssociation]:
-        """
-        Transform variants into case-to-variant associations.
-
-        Args:
-            case_id: ID of the case
-            variants: List of variants
-            pmids: List of PubMed IDs
-
-        Returns:
-            List of case-to-variant associations
-
-        """
-        associations = []
-
-        for variant in variants:
-            if hasattr(variant, 'id'):
-                variant_id = variant.id
-                chr_value = variant.chromosome
-                pos_value = variant.position
-                ref_value = variant.reference
-                alt_value = variant.alternate
-                zygosity = variant.zygosity
-                interpretation_status = variant.interpretation_status
-            elif isinstance(variant, dict):
-                variant_id = variant.get('id', '')
-                chr_value = variant.get('chromosome', '')
-                pos_value = variant.get('position', '')
-                ref_value = variant.get('reference', '')
-                alt_value = variant.get('alternate', '')
-                zygosity = variant.get('zygosity', '')
-                interpretation_status = variant.get('interpretation_status', '')
-            else:
-                continue
-
-            if not variant_id and chr_value and pos_value:
-                chrom = chr_value.replace('chr', '')
-                variant_id = f"{chrom}-{pos_value}"
-                if ref_value and alt_value:
-                    variant_id += f"-{ref_value}-{alt_value}"
-
-            if not variant_id:
-                continue
-
-            def convert_zygosity_to_attribute(zygosity_string):
-                zygosity_map = {
-                    "HETEROZYGOUS": "GENO:0000135",
-                    "HOMOZYGOUS": "GENO:0000136",
-                    "HEMIZYGOUS": "GENO:0000134",
-                    "UNKNOWN": "GENO:0000137",
-                }
-                return zygosity_map.get(zygosity_string.upper(), "GENO:0000137")
-
-            assoc = CaseToVariantAssociation(
-                id=f"PPKT_{case_id}",
-                subject=case_id,
-                predicate="biolink:has_sequence_variant",
-                object=variant_id,
-                knowledge_level=KnowledgeLevelEnum.observation,
-                agent_type=AgentTypeEnum.manual_agent,
-                has_zygosity=convert_zygosity_to_attribute(zygosity.upper()),
                 publications=pmids if pmids else None,
             )
             associations.append(assoc)
@@ -378,10 +304,6 @@ class PhenopacketTransformer:
         if hasattr(record, 'genes') and record.genes:
             gene_assocs = cls.transform_genes(case_id=case_id, genes=record.genes, pmids=record.pmids)
             entities.extend(gene_assocs)
-
-        if hasattr(record, 'variants') and record.variants:
-            variant_assocs = cls.transform_variants(case_id=case_id, variants=record.variants, pmids=record.pmids)
-            entities.extend(variant_assocs)
 
         return entities
 
