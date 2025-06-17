@@ -15,21 +15,16 @@ from phenopacket_ingest.models import (
     PhenotypicFeature,
 )
 
-try:
-    from biolink_model.datamodel.pydanticmodel_v2 import (
-        AgentTypeEnum,
-        BiologicalSex,
-        Case,
-        CaseToDiseaseAssociation,
-        CaseToGeneAssociation,
-        CaseToPhenotypicFeatureAssociation,
-        KnowledgeLevelEnum,
-    )
+from biolink_model.datamodel.pydanticmodel_v2 import (
+    AgentTypeEnum,
+    BiologicalSex,
+    Case,
+    CaseToDiseaseAssociation,
+    CaseToGeneAssociation,
+    CaseToPhenotypicFeatureAssociation,
+    KnowledgeLevelEnum,
+)
 
-    BIOLINK_AVAILABLE = True
-except ImportError:
-    BIOLINK_AVAILABLE = False
-    logging.warning("Biolink model not available. Using fallback implementations.")
 
 
 class PhenopacketTransformer:
@@ -108,12 +103,12 @@ class PhenopacketTransformer:
         if not record.subject.sex:
             print("BiologicalSex not given.")
 
-        if BIOLINK_AVAILABLE:
-            case = Case(
-                id=f"PPKT:{record.id}",
-                name=record.subject.id,
-                has_biological_sex=str(record.subject.sex.value),
-            )
+        case = Case(
+            id=f"phenopacket.store:{record.id}",
+            curie_extension=f"https://github.com/monarch-initiative/phenopacket-store/search?q={record.id}",
+            name=record.subject.id,
+            has_biological_sex=str(record.subject.sex.value),
+        )
 
         return case
 
@@ -157,7 +152,7 @@ class PhenopacketTransformer:
                         onset = feature['onset']['age'] or ""
             assoc = CaseToPhenotypicFeatureAssociation(
                 subject=case_id,
-                id=f"PPKT:{case_id}",
+                id=f"phenopacket.store:{case_id}",
                 predicate="biolink:has_phenotype",
                 object=feature_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
@@ -214,8 +209,7 @@ class PhenopacketTransformer:
                         onset = disease['onset']['age'] or ""
 
             assoc = CaseToDiseaseAssociation(
-                id=f"PPKT:{case_id}",
-                subject=case_id,
+                id=f"phenopacket.store:{case_id}",
                 predicate="biolink:has_disease",
                 object=disease_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
@@ -251,7 +245,7 @@ class PhenopacketTransformer:
                 continue
 
             assoc = CaseToGeneAssociation(
-                id=f"PPKT:{case_id}",
+                id=f"phenopacket.store:{case_id}",
                 subject=case_id,
                 predicate="biolink:has_gene",
                 object=gene_id,
