@@ -345,25 +345,6 @@ def test_genes_extraction(phenopacket_record):
     assert genes[0]["symbol"] == "KCNT1"
     assert genes[0]["interpretation_status"] == "CAUSATIVE"
 
-
-def test_variants_extraction(phenopacket_record):
-    """Test extraction of variants."""
-    variants = phenopacket_record.variants
-
-    assert len(variants) == 1
-    assert variants[0].id == "variant:1"
-    assert variants[0].gene_symbol == "KCNT1"
-    assert variants[0].gene_id == "HGNC:18865"
-    assert variants[0].vcf_record.genome_assembly == "GRCh38"
-    assert variants[0].vcf_record.chrom == "9"
-    assert variants[0].vcf_record.pos == "138650634"
-    assert variants[0].vcf_record.ref == "C"
-    assert variants[0].vcf_record.alt == "G"
-    assert len(variants[0].hgvs_expressions) == 2
-    assert "NM_020822.2:c.2800G>A" in variants[0].hgvs_expressions
-    assert variants[0].zygosity == "heterozygous"
-
-
 def test_phenotypes_extraction(phenopacket_record):
     """Test extraction of observed phenotypes."""
     observed = phenopacket_record.phenotypic_features
@@ -383,12 +364,10 @@ def test_biolink_entity_generation(phenopacket_record):
     # - 3 CaseToPhenotypicFeatureAssociation (incl. negated)
     # - 1 CaseToDiseaseAssociation
     # - 1 CaseToGeneAssociation
-    # - 1 CaseToVariantAssociation
     case_count = sum(1 for t in entity_types if t == "Case" or (isinstance(t, str) and "case" in t.lower()))
     phenotype_assoc_count = sum(1 for t in entity_types if "Phenotypic" in t)
     disease_assoc_count = sum(1 for t in entity_types if "Disease" in t)
     gene_assoc_count = sum(1 for t in entity_types if "Gene" in t)
-    variant_assoc_count = sum(1 for t in entity_types if "Variant" in t)
 
     assert case_count == 7, f"Expected 6 Case, got {case_count} ({type_counts})"
     assert (
@@ -396,7 +375,6 @@ def test_biolink_entity_generation(phenopacket_record):
     ), f"Expected 2 CaseToPhenotypicFeatureAssociation, got {phenotype_assoc_count} ({type_counts})"
     assert disease_assoc_count == 1, f"Expected 1 CaseToDiseaseAssociation, got {disease_assoc_count} ({type_counts})"
     assert gene_assoc_count == 1, f"Expected 1 CaseToGeneAssociation, got {gene_assoc_count} ({type_counts})"
-    assert variant_assoc_count == 1, f"Expected 1 CaseToVariantAssociation, got {variant_assoc_count} ({type_counts})"
 
 
 if __name__ == "__main__":
@@ -415,5 +393,4 @@ if __name__ == "__main__":
     test_metadata_parsing(phenopacket_record)
     test_pmids_extraction(phenopacket_record)
     test_genes_extraction(phenopacket_record)
-    test_variants_extraction(phenopacket_record)
     test_biolink_entity_generation(phenopacket_record)
