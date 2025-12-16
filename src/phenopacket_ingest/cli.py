@@ -1,14 +1,27 @@
 """Command line interface for phenopacket-ingest."""
 
+import json
 import logging
+import ssl
+from datetime import datetime
 from pathlib import Path
+from urllib.request import urlopen
 
+import certifi
 import typer
 from kghub_downloader.download_utils import download_from_yaml
 from koza.cli_utils import transform_source
 
 app = typer.Typer()
 logger = logging.getLogger(__name__)
+
+
+def _get_latest_release_info() -> dict:
+    """Fetch latest release info from GitHub API."""
+    ctx = ssl.create_default_context(cafile=certifi.where())
+    api_url = "https://api.github.com/repos/monarch-initiative/phenopacket-store/releases/latest"
+    with urlopen(api_url, timeout=10.0, context=ctx) as response:
+        return json.load(response)
 
 
 @app.callback()
@@ -24,43 +37,51 @@ def callback(version: bool = typer.Option(False, "--version", is_eager=True)):
 @app.command()
 def download(
     force: bool = typer.Option(False, help="Force download of data, even if it exists"),
-    release_tag: str = typer.Option(None, help="Specific release tag to download (e.g., '0.1.18')"),
 ):
     """Download phenopacket data for processing."""
     typer.echo("Downloading phenopacket data...")
 
+    # Fetch release info from GitHub API
+    release_info = _get_latest_release_info()
+    release_tag = release_info.get("tag_name", "unknown")
+    published_at = release_info.get("published_at", "unknown")
+
+    typer.echo(f"Latest release: {release_tag} (published {published_at})")
+
     download_config = Path(__file__).parent / "download.yaml"
     download_from_yaml(yaml_file=download_config, output_dir=".")
 
-    from phenopacket_ingest.config import PhenopacketStoreConfig
-    from phenopacket_ingest.registry import PhenopacketRegistryService
+    # Save version metadata
+    metadata_dir = Path("data/phenopackets")
+    metadata_dir.mkdir(parents=True, exist_ok=True)
+    metadata_file = metadata_dir / "version.json"
+    metadata = {
+        "release_tag": release_tag,
+        "published_at": published_at,
+        "downloaded_at": datetime.now().isoformat(),
+        "source_url": release_info.get("html_url", ""),
+    }
+    with open(metadata_file, "w") as f:
+        json.dump(metadata, f, indent=2)
 
-    config = PhenopacketStoreConfig()
-    if release_tag:
-        config.release_tag = release_tag
-
-    registry = PhenopacketRegistryService()
-    zip_path = registry.download_latest_release()
-
-    typer.echo(f"Downloaded phenopacket data to {zip_path}")
+    typer.echo(f"Downloaded phenopacket data to data/phenopackets/all_phenopackets.zip")
+    typer.echo(f"Version metadata saved to {metadata_file}")
 
 
 @app.command()
 def extract(
     force: bool = typer.Option(False, help="Force re-extraction of data, even if it exists"),
-    release_tag: str = typer.Option(None, help="Specific release tag to process"),
 ):
     """Extract phenopacket data to JSONL format for transformation."""
-    from phenopacket_ingest.config import PhenopacketStoreConfig
     from phenopacket_ingest.registry import PhenopacketRegistryService
 
-    config = PhenopacketStoreConfig()
-    if release_tag:
-        config.release_tag = release_tag
-        print(f"Release tag: {release_tag}")
+    zip_path = Path("data/phenopackets/all_phenopackets.zip")
+    if not zip_path.exists():
+        typer.echo(f"Zip file {zip_path} not found. Run 'download' first.")
+        raise typer.Exit(1)
 
     registry = PhenopacketRegistryService()
-    jsonl_path = registry.extract_phenopackets_to_jsonl()
+    jsonl_path = registry.extract_phenopackets_to_jsonl(zip_path=zip_path)
 
     typer.echo(f"Extracted phenopacket data to {jsonl_path}")
 
@@ -73,7 +94,7 @@ def transform(
     verbose: bool = typer.Option(False, help="Whether to be verbose"),
 ):
     """Run the Koza transform for phenopacket-ingest."""
-    jsonl_path = Path("data/phenopackets/output/phenopackets.jsonl")
+    jsonl_path = Path("data/phenopackets.jsonl")
     if not jsonl_path.exists():
         typer.echo(f"JSONL file {jsonl_path} does not exist. Running extraction...")
         extract()
@@ -95,14 +116,13 @@ def transform(
 @app.command()
 def pipeline(
     output_dir: str = typer.Option("output", help="Output directory for transformed data"),
-    release_tag: str = typer.Option(None, help="Specific release tag to process"),
     row_limit: int = typer.Option(None, help="Number of rows to process"),
     limit: int = typer.Option(None, help="Limit to process only N phenopackets (shortcut for row_limit=1)"),
     verbose: bool = typer.Option(False, help="Whether to be verbose"),
 ):
     """Run the complete phenopacket-ingest pipeline (download, extract, transform)."""
-    download(force=False, release_tag=release_tag)
-    extract(force=False, release_tag=release_tag)
+    download(force=False)
+    extract(force=False)
     transform(output_dir=output_dir, row_limit=row_limit, limit=limit, verbose=verbose)
 
 

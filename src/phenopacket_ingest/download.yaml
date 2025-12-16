@@ -1,6 +1,6 @@
 # Phenopacket-ingest download configuration
 # This file contains configuration for auxiliary data downloads
 
-title: "Phenopacket Store"
-download_url: https://github.com/phenopackets/phenopacket-store/releases/download/v0.1.18/all_phenopackets.zip
-local_name: data/phenopackets/v0.1.18.zip
+- title: "Phenopacket Store"
+  url: https://github.com/monarch-initiative/phenopacket-store/releases/latest/download/all_phenopackets.zip
+  local_name: data/phenopackets/all_phenopackets.zip

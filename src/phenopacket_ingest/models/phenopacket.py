@@ -20,11 +20,12 @@ class Age(BaseModel):
 
 
 class Encounter(BaseModel):
-    age: Age
+    age: Optional[Age] = None
+    ontology_class: Optional[Dict[str, Any]] = None
 
     @property
-    def age_value(self) -> str:
-        return self.age.iso8601duration
+    def age_value(self) -> Optional[str]:
+        return self.age.iso8601duration if self.age else None
 
 
 class TimeElement(BaseModel):
@@ -63,10 +64,18 @@ class KaryotypicSex(str, Enum):
 class VitalStatus(BaseModel):
     """Vital status of an individual."""
 
-    status: str
+    status: Optional[str] = None
     time_of_death: Optional[TimeElement] = None
     cause_of_death: Optional[OntologyClass] = None
     survival_time_after_onset: Optional[TimeElement] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def handle_empty_dict(cls, data):
+        """Treat empty dict as valid (all fields optional)."""
+        if data == {}:
+            return {'status': None}
+        return data
 
 
 class Evidence(BaseModel):
@@ -216,7 +225,7 @@ class ReferenceRange(BaseModel):
 class Quantity(BaseModel):
     referenceRange: Optional[ReferenceRange] = None
     unit: Optional[OntologyClass] = None
-    value: Optional[int] = None
+    value: Optional[float] = None
 
 
 class Value(BaseModel):

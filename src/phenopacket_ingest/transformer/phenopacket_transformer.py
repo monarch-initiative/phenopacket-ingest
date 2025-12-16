@@ -100,14 +100,14 @@ class PhenopacketTransformer:
         if not record.subject.id:
             return None
 
-        if not record.subject.sex:
-            print("BiologicalSex not given.")
+        biological_sex = None
+        if record.subject.sex:
+            biological_sex = str(record.subject.sex.value)
 
         case = Case(
             id=f"phenopacket.store:{record.id}",
-            curie_extension=f"https://github.com/monarch-initiative/phenopacket-store/search?q={record.id}",
             name=record.subject.id,
-            has_biological_sex=str(record.subject.sex.value),
+            has_biological_sex=biological_sex,
         )
 
         return case
@@ -152,11 +152,12 @@ class PhenopacketTransformer:
                         onset = feature['onset']['age'] or ""
             assoc = CaseToPhenotypicFeatureAssociation(
                 subject=case_id,
-                id=f"phenopacket.store:{case_id}",
+                id=case_id,
                 predicate="biolink:has_phenotype",
                 object=feature_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
+                primary_knowledge_source="infores:phenopacket-store",
                 onset_qualifier=str(onset),
                 negated=excluded,
                 publications=pmids if pmids else None,
@@ -209,11 +210,13 @@ class PhenopacketTransformer:
                         onset = disease['onset']['age'] or ""
 
             assoc = CaseToDiseaseAssociation(
-                id=f"phenopacket.store:{case_id}",
+                id=case_id,
+                subject=case_id,
                 predicate="biolink:has_disease",
                 object=disease_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
+                primary_knowledge_source="infores:phenopacket-store",
                 onset_qualifier=str(onset),
                 publications=pmids if pmids else None,
             )
@@ -245,12 +248,13 @@ class PhenopacketTransformer:
                 continue
 
             assoc = CaseToGeneAssociation(
-                id=f"phenopacket.store:{case_id}",
+                id=case_id,
                 subject=case_id,
                 predicate="biolink:has_gene",
                 object=gene_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
                 agent_type=AgentTypeEnum.manual_agent,
+                primary_knowledge_source="infores:phenopacket-store",
                 publications=pmids if pmids else None,
             )
             associations.append(assoc)
