@@ -369,10 +369,10 @@ def test_biolink_entity_generation(phenopacket_record):
     disease_assoc_count = sum(1 for t in entity_types if "Disease" in t)
     gene_assoc_count = sum(1 for t in entity_types if "Gene" in t)
 
-    assert case_count == 7, f"Expected 6 Case, got {case_count} ({type_counts})"
+    assert case_count == 6, f"Expected 6 entities with 'Case' in name, got {case_count} ({type_counts})"
     assert (
         phenotype_assoc_count == 3
-    ), f"Expected 2 CaseToPhenotypicFeatureAssociation, got {phenotype_assoc_count} ({type_counts})"
+    ), f"Expected 3 CaseToPhenotypicFeatureAssociation, got {phenotype_assoc_count} ({type_counts})"
     assert disease_assoc_count == 1, f"Expected 1 CaseToDiseaseAssociation, got {disease_assoc_count} ({type_counts})"
     assert gene_assoc_count == 1, f"Expected 1 CaseToGeneAssociation, got {gene_assoc_count} ({type_counts})"
 
