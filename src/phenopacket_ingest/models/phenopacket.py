@@ -414,6 +414,14 @@ class PhenopacketRecord(BaseModel):
                             if "gene_context" in vd:
                                 variant.gene_symbol = vd["gene_context"].get("symbol", "")
                                 variant.gene_id = vd["gene_context"].get("value_id", "")
+                                # Also populate self.genes
+                                gene_info = {
+                                    "id": vd["gene_context"].get("value_id", ""),
+                                    "symbol": vd["gene_context"].get("symbol", ""),
+                                    "interpretation_status": gi.get("interpretation_status", ""),
+                                }
+                                if gene_info["id"] and gene_info not in self.genes:
+                                    self.genes.append(gene_info)
 
                             if "vcf_record" in vd:
                                 vcf = vd["vcf_record"]
@@ -437,6 +445,21 @@ class PhenopacketRecord(BaseModel):
                                         variant.hgvs_expressions.append(expr["value"])
 
                             self.variants.append(variant)
+
+        # If genes still empty but variants exist, extract genes from variants
+        if not self.genes and self.variants:
+            for variant in self.variants:
+                gene_id = variant.gene_id if hasattr(variant, 'gene_id') else None
+                gene_symbol = variant.gene_symbol if hasattr(variant, 'gene_symbol') else None
+                interpretation_status = variant.interpretation_status if hasattr(variant, 'interpretation_status') else None
+                if gene_id:
+                    gene_info = {
+                        "id": gene_id,
+                        "symbol": gene_symbol or "",
+                        "interpretation_status": interpretation_status or "",
+                    }
+                    if gene_info not in self.genes:
+                        self.genes.append(gene_info)
 
         if not self.pmids and self.meta_data and hasattr(self.meta_data, "external_references"):
             for ref in self.meta_data.external_references:
