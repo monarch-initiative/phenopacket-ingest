@@ -7,6 +7,7 @@ into Biolink model entities for knowledge graph integration.
 
 import json
 import logging
+import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from phenopacket_ingest.models import (
@@ -152,7 +153,7 @@ class PhenopacketTransformer:
                         onset = feature['onset']['age'] or ""
             assoc = CaseToPhenotypicFeatureAssociation(
                 subject=case_id,
-                id=case_id,
+                id=f"uuid:{uuid.uuid4()}",
                 predicate="biolink:has_phenotype",
                 object=feature_id,
                 knowledge_level=KnowledgeLevelEnum.observation,
@@ -210,7 +211,7 @@ class PhenopacketTransformer:
                         onset = disease['onset']['age'] or ""
 
             assoc = CaseToDiseaseAssociation(
-                id=case_id,
+                id=f"uuid:{uuid.uuid4()}",
                 subject=case_id,
                 predicate="biolink:has_disease",
                 object=disease_id,
@@ -248,7 +249,7 @@ class PhenopacketTransformer:
                 continue
 
             assoc = CaseToGeneAssociation(
-                id=case_id,
+                id=f"uuid:{uuid.uuid4()}",
                 subject=case_id,
                 predicate="biolink:has_gene",
                 object=gene_id,
