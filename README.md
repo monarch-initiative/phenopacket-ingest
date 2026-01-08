@@ -15,7 +15,7 @@ The phenopacket-ingest pipeline processes phenopacket data through several steps
 This ingest relies on phenopacket data from the [phenopacket-store](https://github.com/monarch-initiative/phenopacket-store) repository, which contains structured phenotypic data about rare disease cases in the GA4GH Phenopacket format.
 
 ### Source Files
-- **phenopacket-store releases**: ZIP archive containing JSON phenopacket files organized by cohort
+- **phenopacket-store releases**: ZIP archive containing JSON phenopacket files organized by cohort (gene folder)
 - Each phenopacket contains standardized data about an individual case including:
   - Subject information (ID, sex, age)
   - Phenotypic features (HPO terms)
@@ -23,6 +23,24 @@ This ingest relies on phenopacket data from the [phenopacket-store](https://gith
   - Genetic findings (variants and genes)
   - Interpretations (causality assessments)
   - Metadata (references, provenance)
+
+### Entity ID Format
+
+Phenopacket Case entities are assigned IDs that include the cohort (gene folder) name for proper URI resolution:
+
+```
+phenopacket.store:{cohort}/{phenopacket_id}
+```
+
+For example:
+- `phenopacket.store:POGZ/PMID_34133408_case`
+- `phenopacket.store:KCNT1/PMID_30566666_patient1`
+- `phenopacket.store:11q_terminal_deletion/PMID_15266616_35`
+
+This format allows the Monarch API to expand the CURIE to the correct GitHub URL:
+```
+https://github.com/monarch-initiative/phenopacket-store/blob/main/notebooks/{cohort}/phenopackets/{phenopacket_id}.json
+```
 
 
 ## Requirements
