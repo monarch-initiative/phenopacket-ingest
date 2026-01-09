@@ -382,8 +382,8 @@ def test_case_id_includes_cohort(phenopacket_record):
     entities = PhenopacketTransformer.process_record(phenopacket_record)
     case = entities[0]  # First entity should be the Case
 
-    # Verify the Case ID includes the cohort
-    assert case.id == "phenopacket.store:Epilepsy Study/phenopacket.test.1"
+    # Verify the Case ID includes the cohort (dot separator per issue #8)
+    assert case.id == "phenopacket.store:Epilepsy Study.phenopacket.test.1"
     assert "Epilepsy Study" in case.id
 
 
