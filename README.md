@@ -29,15 +29,15 @@ This ingest relies on phenopacket data from the [phenopacket-store](https://gith
 Phenopacket Case entities are assigned IDs that include the cohort (gene folder) name for proper URI resolution:
 
 ```
-phenopacket.store:{cohort}/{phenopacket_id}
+phenopacket.store:{cohort}.{phenopacket_id}
 ```
 
 For example:
-- `phenopacket.store:POGZ/PMID_34133408_case`
-- `phenopacket.store:KCNT1/PMID_30566666_patient1`
-- `phenopacket.store:11q_terminal_deletion/PMID_15266616_35`
+- `phenopacket.store:POGZ.PMID_34133408_case`
+- `phenopacket.store:KCNT1.PMID_30566666_patient1`
+- `phenopacket.store:11q_terminal_deletion.PMID_15266616_35`
 
-This format allows the Monarch API to expand the CURIE to the correct GitHub URL:
+The dot separator is URL-safe (per GA4GH recommendations and RFC 3986), avoiding routing issues that occur with `/` separators. The Monarch API expands this CURIE to the correct GitHub URL:
 ```
 https://github.com/monarch-initiative/phenopacket-store/blob/main/notebooks/{cohort}/phenopackets/{phenopacket_id}.json
 ```
