@@ -377,6 +377,39 @@ def test_biolink_entity_generation(phenopacket_record):
     assert gene_assoc_count == 1, f"Expected 1 CaseToGeneAssociation, got {gene_assoc_count} ({type_counts})"
 
 
+def test_case_id_includes_cohort(phenopacket_record):
+    """Test that Case ID includes cohort for proper URI resolution (issue #6)."""
+    entities = PhenopacketTransformer.process_record(phenopacket_record)
+    case = entities[0]  # First entity should be the Case
+
+    # Verify the Case ID includes the cohort
+    assert case.id == "phenopacket.store:Epilepsy Study/phenopacket.test.1"
+    assert "Epilepsy Study" in case.id
+
+
+def test_case_id_without_cohort():
+    """Test that Case ID works correctly when cohort is not present."""
+    phenopacket_no_cohort = {
+        "id": "test.nocohort.1",
+        "subject": {
+            "id": "patient:nocohort",
+            "sex": "MALE",
+        },
+        "phenotypic_features": [],
+        "diseases": [],
+    }
+    parser = PhenopacketParser()
+    record = parser.parse_from_json(json.dumps(phenopacket_no_cohort))
+    phenopacket_record = PhenopacketRecord.model_validate(record)
+
+    entities = PhenopacketTransformer.process_record(phenopacket_record)
+    case = entities[0]
+
+    # Without cohort, ID should just be phenopacket.store:{id}
+    assert case.id == "phenopacket.store:test.nocohort.1"
+    assert "/" not in case.id.split("phenopacket.store:")[1]
+
+
 if __name__ == "__main__":
     parser = PhenopacketParser()
     record = parser.parse_from_json(json.dumps(COMPLETE_PHENOPACKET))

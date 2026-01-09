@@ -105,8 +105,15 @@ class PhenopacketTransformer:
         if record.subject.sex:
             biological_sex = str(record.subject.sex.value)
 
+        # Include cohort in ID for proper URI resolution (see issue #6)
+        # Format: phenopacket.store:{cohort}/{id}
+        if record.cohort:
+            case_id = f"phenopacket.store:{record.cohort}/{record.id}"
+        else:
+            case_id = f"phenopacket.store:{record.id}"
+
         case = Case(
-            id=f"phenopacket.store:{record.id}",
+            id=case_id,
             name=record.subject.id,
             has_biological_sex=biological_sex,
         )
