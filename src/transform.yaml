@@ -1,13 +1,12 @@
-# Example `phenopacket_ingest.yaml` for Koza test setup (validated structure)
-
-# This configuration points to a test JSONL input and instructs Koza how to process it.
+# Config file for transforming phenopacket data
+# See additional/optional config parameters at https://koza.monarchinitiative.org/Ingests/source_config/
 
 name: "phenopacket_ingest"
 
 reader:
   name: "phenopacket_reader"
   files:
-    - "./phenopacket_genes.jsonl"
+    - "./data/phenopackets.jsonl"
   format: "jsonl"
 
 transform:
@@ -25,6 +24,7 @@ writer:
     - has_biological_sex
   edge_properties:
     - id
+    - category
     - subject
     - predicate
     - object
