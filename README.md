@@ -1,136 +1,50 @@
 # phenopacket-ingest
 
-A Monarch Initiative ingest pipeline for phenopacket data from the [phenopacket-store](https://github.com/monarch-initiative/phenopacket-store). This pipeline downloads phenopacket data, extracts it, and transforms it into Biolink-compatible entities for inclusion in Monarch knowledge graphs.
+Koza ingest for phenopacket data, transforming phenopackets from the [phenopacket-store](https://github.com/monarch-initiative/phenopacket-store) into Biolink model format for knowledge graph integration.
 
-## Overview
+## Data Source
 
-The phenopacket-ingest pipeline processes phenopacket data through several steps:
+[Phenopacket Store](https://github.com/monarch-initiative/phenopacket-store) contains structured phenotypic data about rare disease cases in the GA4GH Phenopacket format.
 
-1. **Download**: Retrieves the latest phenopacket data from the phenopacket-store GitHub releases
-2. **Extract**: Parses phenopacket data into a structured JSONL format
-3. **Transform**: Converts the structured data into Biolink model entities for knowledge graph integration
+Data is downloaded from: `https://github.com/monarch-initiative/phenopacket-store/releases/latest/download/all_phenopackets.zip`
 
-## Data Sources
+## Output
 
-This ingest relies on phenopacket data from the [phenopacket-store](https://github.com/monarch-initiative/phenopacket-store) repository, which contains structured phenotypic data about rare disease cases in the GA4GH Phenopacket format.
+This ingest produces:
+- **Case nodes** - Individual cases with subject information
+- **Case-to-phenotype associations** - Links cases to phenotypic features (HPO terms)
+- **Case-to-disease associations** - Links cases to diseases (MONDO terms)
+- **Case-to-gene associations** - Links cases to genes from interpretation data
 
-### Source Files
-- **phenopacket-store releases**: ZIP archive containing JSON phenopacket files organized by cohort (gene folder)
-- Each phenopacket contains standardized data about an individual case including:
-  - Subject information (ID, sex, age)
-  - Phenotypic features (HPO terms)
-  - Disease information (MONDO terms)
-  - Genetic findings (variants and genes)
-  - Interpretations (causality assessments)
-  - Metadata (references, provenance)
+## Entity ID Format
 
-### Entity ID Format
-
-Phenopacket Case entities are assigned IDs that include the cohort (gene folder) name for proper URI resolution:
-
+Case entities use IDs that include the cohort for proper URI resolution:
 ```
 phenopacket.store:{cohort}.{phenopacket_id}
 ```
 
-For example:
-- `phenopacket.store:POGZ.PMID_34133408_case`
-- `phenopacket.store:KCNT1.PMID_30566666_patient1`
-- `phenopacket.store:11q_terminal_deletion.PMID_15266616_35`
+## Usage
 
-The dot separator is URL-safe (per GA4GH recommendations and RFC 3986), avoiding routing issues that occur with `/` separators. The Monarch API expands this CURIE to the correct GitHub URL:
-```
-https://github.com/monarch-initiative/phenopacket-store/blob/main/notebooks/{cohort}/phenopackets/{phenopacket_id}.json
-```
+```bash
+# Install dependencies
+just install
 
+# Run full pipeline
+just run
+
+# Or run steps individually
+just download      # Download phenopacket data
+just preprocess    # Extract to JSONL
+just transform-all # Run Koza transform
+just test          # Run tests
+```
 
 ## Requirements
 
-- Python >= 3.10
-- [Poetry](https://python-poetry.org/docs/#installation)
-- [phenopackets library](https://github.com/phenopackets/phenopacket-schema) (optional, but recommended)
-- [phenopacket-store-toolkit](https://github.com/monarch-initiative/phenopacket-store-toolkit) (optional, but recommended)
+- Python 3.10+
+- [uv](https://github.com/astral-sh/uv) package manager
+- [just](https://github.com/casey/just) command runner
 
-## Installation
+## License
 
-```bash
-cd phenopacket-ingest
-make install
-# or
-poetry install
-```
-
-## Usage
-
-### Full Pipeline
-
-To run the complete pipeline (download, extract, transform) in one step:
-
-```bash
-poetry run phenopacket_ingest pipeline
-```
-
-### Individual Steps
-
-For more granular control, you can run each step individually:
-
-1. Download the data:
-```bash
-poetry run phenopacket_ingest download
-```
-
-2. Extract phenopacket data to JSONL format:
-```bash
-poetry run phenopacket_ingest extract
-```
-
-3. Transform the data to Biolink entities:
-```bash
-poetry run phenopacket_ingest transform
-```
-
-### Command Options
-
-Each command has various options. To see them:
-
-```bash
-poetry run phenopacket_ingest [command] --help
-```
-
-For example:
-```
-poetry run phenopacket_ingest download --help
-```
-
-### Testing
-
-The test suite covers:
-- Model validation and conversion
-- Transformation to Biolink entities
-- Registry functionality (downloading and extraction)
-
-Run the tests with:
-```bash
-make test
-# or
-python -m pytest
-```
-
-## Development
-
-To contribute to this project:
-
-1. Clone the repository
-2. Install development dependencies:
-   ```bash
-   make install-dev
-   # or
-   poetry install --with dev
-   ```
-3. Run the tests:
-   ```bash
-   make test
-   ```
-
----
-
-> This project was generated using [monarch-initiative/cookiecutter-monarch-ingest](https://github.com/monarch-initiative/cookiecutter-monarch-ingest).
+BSD-3-Clause

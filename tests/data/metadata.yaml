@@ -1,8 +1,0 @@
-# Metadata for the phenopacket-ingest project
-id: 'phenopacket_ingest'
-name: 'phenopacket_ingest'
-ingest_title: 'phenopacket-ingest'
-ingest_url: 'https://github.com/monarch-initiative/phenopacket-ingest'
-description: 'Conversion of phenopacket data to biolink model format'
-provided_by: 'phenopacket-store'
-license: 'https://github.com/monarch-initiative/phenopacket-store/blob/main/LICENSE'

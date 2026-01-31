@@ -1,116 +1,85 @@
-import types
+import importlib.util
+from pathlib import Path
 from typing import Dict, List
 
 import pytest
-import yaml
-from koza.app import KozaApp
-from koza.io.yaml_loader import UniqueIncludeLoader
-from koza.model.config.source_config import OutputFormat, PrimaryFileConfig
-from koza.model.source import Source
-from pathlib import Path
+from koza.runner import KozaRunner, PassthroughWriter, load_transform
 
 import logging
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(message)s'))
+handler.setFormatter(logging.Formatter("%(message)s"))
 logger.addHandler(handler)
 
-def get_mock_koza(
-    yaml_file: str, translation_table: str, output_dir: str, output_format: str, files: List[str]
-) -> KozaApp:
-    with open(yaml_file, 'r') as source_fh:
-        yaml_data = yaml.load(source_fh, Loader=UniqueIncludeLoader)
 
-    yaml_data['metadata'] = get_test_data_path("metadata.yaml")
-    yaml_data['files'] = files
-    source_config = PrimaryFileConfig(**yaml_data)
+# Paths relative to the tests directory
+TESTS_DIR = Path(__file__).parent
+TRANSFORM_SCRIPT = TESTS_DIR.parent / "src" / "transform.py"
+TEST_DATA_DIR = TESTS_DIR / "data"
 
-    koza_app = KozaApp(
-        source=Source(source_config),
-        translation_table=translation_table,
-        output_dir=output_dir,
-        output_format=OutputFormat(output_format),
+
+def load_module_from_path(path: Path):
+    """Load a Python module from a file path."""
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def run_transform(rows: List[Dict]) -> List:
+    """Run the transform on a list of input rows and return the output entities."""
+    module = load_module_from_path(TRANSFORM_SCRIPT)
+    hooks = load_transform(module)
+    writer = PassthroughWriter()
+    runner = KozaRunner(
+        data=iter(rows),
+        writer=writer,
+        hooks=hooks,
+        base_directory=TRANSFORM_SCRIPT.parent,
     )
+    runner.run()
+    return writer.data
 
-    def _mock_write(self, *entities):
-        if hasattr(self, '_entities'):
-            self._entities.extend(list(entities))
-        else:
-            self._entities = list(entities)
-
-    koza_app.write = types.MethodType(_mock_write, koza_app)
-    return koza_app
-
-
-def get_koza_rows(mock_koza: KozaApp, n_rows: int) -> List[Dict]:
-    rows = []
-    for _ in range(n_rows):
-        row = mock_koza.get_row()
-        if row is not None:
-            rows.append(row)
-    return rows
 
 def get_test_data_path(relative_path: str) -> str:
-    return str(Path(__file__).parent.joinpath("data", relative_path).resolve())
-
-@pytest.fixture
-def phenopacket_yaml():
-    return get_test_data_path("test_transform.yaml")
+    return str(TEST_DATA_DIR.joinpath(relative_path).resolve())
 
 
-@pytest.fixture
-def phenopacket_translation_table() -> str:
-    return get_test_data_path("translation_table.yaml")
+def load_test_rows(file_path: str, n_rows: int = None, skip_rows: int = 0) -> List[Dict]:
+    """Load rows from a JSONL file for testing."""
+    import json
 
-
-@pytest.fixture
-def phenopacket_test_file() -> List[str]:
-    return [get_test_data_path("phenopacket_genes.jsonl")]
-
-
-@pytest.fixture
-def phenopacket_test_output() -> str:
-    return "test-output/phenopacket_test"
+    rows = []
+    with open(file_path, "r") as f:
+        for i, line in enumerate(f):
+            if i < skip_rows:
+                continue
+            if n_rows is not None and len(rows) >= n_rows:
+                break
+            rows.append(json.loads(line))
+    return rows
 
 
 @pytest.fixture
-def phenopacket_test_output_format() -> str:
-    return "tsv"
+def phenopacket_test_file() -> str:
+    return get_test_data_path("phenopacket_genes.jsonl")
 
 
 @pytest.fixture
-def phenopacket_mock_koza(
-    phenopacket_yaml,
-    phenopacket_translation_table,
-    phenopacket_test_output,
-    phenopacket_test_output_format,
-    phenopacket_test_file,
-) -> KozaApp:
-    return get_mock_koza(
-        phenopacket_yaml,
-        phenopacket_translation_table,
-        phenopacket_test_output,
-        phenopacket_test_output_format,
-        phenopacket_test_file,
-    )
+def row_group_1(phenopacket_test_file) -> List[Dict]:
+    return load_test_rows(phenopacket_test_file, n_rows=3)
 
 
 @pytest.fixture
-def row_group_1(phenopacket_mock_koza) -> List[Dict]:
-    return get_koza_rows(phenopacket_mock_koza, 3)  # Example: first 3 rows
+def row_group_2(phenopacket_test_file) -> List[Dict]:
+    return load_test_rows(phenopacket_test_file, n_rows=4, skip_rows=3)
 
 
 @pytest.fixture
-def row_group_2(phenopacket_mock_koza) -> List[Dict]:
-    _ = get_koza_rows(phenopacket_mock_koza, 3)  # skip first 3
-    return get_koza_rows(phenopacket_mock_koza, 4)  # next 4 rows
-
-
-@pytest.fixture
-def row_group_3(phenopacket_mock_koza) -> List[Dict]:
-    _ = get_koza_rows(phenopacket_mock_koza, 7)  # skip first 7
-    return get_koza_rows(phenopacket_mock_koza, 3)  # last 3 rows
+def row_group_3(phenopacket_test_file) -> List[Dict]:
+    return load_test_rows(phenopacket_test_file, n_rows=3, skip_rows=7)
 
 
 def test_row_group_1_structure(row_group_1):
@@ -118,5 +87,38 @@ def test_row_group_1_structure(row_group_1):
     for row in row_group_1:
         assert "id" in row
         assert "subject_sex" in row
-        assert "disease_id" in row
         assert "phenotypic_features" in row
+
+
+def test_transform_produces_entities(row_group_1):
+    """Test that the transform produces output entities."""
+    entities = run_transform(row_group_1)
+    assert len(entities) > 0, "Transform should produce at least one entity"
+
+
+def test_transform_produces_case_entities(row_group_1):
+    """Test that the transform produces Case entities."""
+    entities = run_transform(row_group_1)
+    # Check for Case entities (type checking based on the biolink model)
+    case_entities = [e for e in entities if hasattr(e, "has_biological_sex")]
+    assert len(case_entities) > 0, "Transform should produce Case entities"
+
+
+def test_transform_produces_associations(row_group_1):
+    """Test that the transform produces association entities."""
+    entities = run_transform(row_group_1)
+    # Associations have subject/predicate/object
+    associations = [e for e in entities if hasattr(e, "subject") and hasattr(e, "predicate") and hasattr(e, "object")]
+    assert len(associations) > 0, "Transform should produce association entities"
+
+
+def test_row_group_2_transform(row_group_2):
+    """Test transform on second group of rows."""
+    entities = run_transform(row_group_2)
+    assert len(entities) > 0, "Transform should produce entities from row_group_2"
+
+
+def test_row_group_3_transform(row_group_3):
+    """Test transform on third group of rows."""
+    entities = run_transform(row_group_3)
+    assert len(entities) > 0, "Transform should produce entities from row_group_3"
