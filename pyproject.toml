@@ -30,7 +30,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src/phenopacket_ingest"]
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
