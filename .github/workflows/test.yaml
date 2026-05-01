@@ -23,8 +23,11 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
       - name: Install just
         uses: extractions/setup-just@v2
 
-      - name: Run pipeline
-        run: just run
+      - name: Run tests
+        run: just test
