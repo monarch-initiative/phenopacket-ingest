@@ -50,7 +50,7 @@ class PhenopacketParser:
 
         try:
             phenopacket_dict = MessageToDict(
-                phenopacket, preserving_proto_field_name=True, including_default_value_fields=False
+                phenopacket, preserving_proto_field_name=True
             )
 
             self._process_special_fields(phenopacket_dict)

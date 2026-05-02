@@ -4,17 +4,13 @@
 name: "phenopacket_ingest"
 
 reader:
-  name: "phenopacket_reader"
   files:
-    - "./data/phenopackets.jsonl"
+    - "../data/phenopackets.jsonl"
   format: "jsonl"
 
-transform:
-  name: "phenopacket_transform"
-  mode: "flat"
+transform: {}
 
 writer:
-  name: "phenopacket_writer"
   node_properties:
     - id
     - name
