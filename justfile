@@ -19,9 +19,9 @@ install:
 
 # ============== Ingest Pipeline ==============
 
-# Full pipeline: download -> preprocess -> transform -> postprocess
+# Full pipeline: download -> preprocess -> transform -> postprocess -> metadata
 [group('ingest')]
-run: download preprocess transform-all postprocess
+run: download preprocess transform-all postprocess metadata
     @echo "Done!"
 
 # Download source data
@@ -36,7 +36,7 @@ preprocess:
 
 # Run all transforms
 [group('ingest')]
-transform-all:
+transform-all: download
     #!/usr/bin/env bash
     set -euo pipefail
     for t in {{TRANSFORMS}}; do
@@ -45,6 +45,11 @@ transform-all:
             uv run koza transform {{PKG}}/$t.yaml
         fi
     done
+
+# Emit output/release-metadata.yaml describing this build's upstream sources and artifacts
+[group('ingest')]
+metadata:
+    uv run python scripts/write_metadata.py
 
 # Run specific transform
 [group('ingest')]
@@ -60,12 +65,12 @@ postprocess:
 
 # Run tests
 [group('development')]
-test:
+test: install
     uv run pytest
 
 # Run tests with coverage
 [group('development')]
-test-cov:
+test-cov: install
     uv run pytest --cov=. --cov-report=term-missing
 
 # Lint code
